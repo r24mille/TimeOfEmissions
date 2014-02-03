@@ -34,3 +34,8 @@ local.properties
 !.git*
 *~
 
+### Java ###
+target/*
+/bin
+/target
+/build
