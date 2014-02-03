@@ -1,13 +1,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<parent>
+        <groupId>name.reidmiller</groupId>
+        <artifactId>IesoPublicReportBindings</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>submodules/IesoPublicReportBindings</relativePath>
+    </parent>
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>TimeOfEmissions</groupId>
 	<artifactId>TimeOfEmissions</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<packaging>war</packaging>
+	
 	<properties>
 		<org.springframework.version>4.0.1.RELEASE</org.springframework.version>
 	</properties>
+	
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<plugins>
@@ -25,6 +31,7 @@
 			</plugin>
 		</plugins>
 	</build>
+	
 	<dependencies>
 		<dependency>
 			<groupId>javax.servlet</groupId>
