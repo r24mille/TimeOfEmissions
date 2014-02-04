@@ -28,6 +28,8 @@
 			</nav>
 		</header>
 	</div>
+	
+	${model.data}
 
 	<div class="main-container">
 		<div class="main wrapper clearfix">
@@ -40,25 +42,24 @@
 				</header>
 				<section>
 					<h2>Here Goes!</h2>
-					<canvas id="myChart" width="400" height="400"></canvas>
+					<ol>
+						<li>labels = ${labels}</li>
+						<li>data = ${data}</li>
+					</ol>
+					<canvas id="myChart" width="2500" height="1000"></canvas>
 					<script>
+						var labelsJSON = ${labels};
+						var dataJSON = ${data};
 						var data = {
-							labels : [ "January", "February", "March", "April",
-									"May", "June", "July" ],
+							labels : [1, "", 2, "", 3, "", 4, "", 5, "", 6, "", 7, ""],
 							datasets : [ {
 								fillColor : "rgba(220,220,220,0.5)",
 								strokeColor : "rgba(220,220,220,1)",
 								pointColor : "rgba(220,220,220,1)",
 								pointStrokeColor : "#fff",
-								data : [ 65, 59, 90, 81, 56, 55, 40 ]
-							}, {
-								fillColor : "rgba(151,187,205,0.5)",
-								strokeColor : "rgba(151,187,205,1)",
-								pointColor : "rgba(151,187,205,1)",
-								pointStrokeColor : "#fff",
-								data : [ 28, 48, 40, 19, 96, 27, 100 ]
-							} ]
-						}
+								data : dataJSON
+							}]
+						};
 
 						//Get the context of the canvas element we want to select
 						var ctx = document.getElementById("myChart")
