@@ -11,7 +11,9 @@
 
 <link rel="stylesheet" href="resources/css/normalize.min.css">
 <link rel="stylesheet" href="resources/css/main.css">
-
+<script src="resources/js/jquery-1.10.1.min.js"></script>
+<script src="resources/js/main.js"></script>
+<script src="resources/js/jquery-dateFormat.js"></script>
 <script src="resources/js/dygraph-combined.js"></script>
 </head>
 <body>
@@ -48,7 +50,7 @@
 						<fmt:formatDate type="date" value="${reportDate}"
 							dateStyle="medium" />
 					</h2>
-					<div id="myChart" style="width: 100%; height: 475px;"></div>
+					<div id="sbg_tou_chart" style="width: 100%; height: 475px;"></div>
 					<script>
 						var labelsJSON = ${labels};
 						var dataJSON = ${data};
@@ -62,15 +64,36 @@
 						}
 
 						var sbg_graph = new Dygraph(
-						document.getElementById("myChart"),
+						document.getElementById("sbg_tou_chart"),
 						dataJSON,
 						{
-							title : 'Surplus Baseload Generation Forecast',
-							xlabel : 'Date',
-							ylabel : 'Megawatts (MW)',
+							title : "Surplus Baseload Generation Forecast",
+							titleHeight : 75,
+							xlabel : "Date",
+							ylabel : "Megawatts (MW)",
 							drawPoints : true,
-							valueRange : [ 0.0, 3250.0 ],				
+							fillGraph: false,
+							fillAlpha: 0.25,
+							strokeWidth: 1.5,
+							pointSize: 2,
+							yAxisLabelWidth: 65,
+							colors: ["#000000"],
+							labelsDivWidth: 300,			
 							labels : labelsJSON,
+							axes: {
+								x: {
+									axisLabelFormatter: function(d) { return $.format.date(d, "MM/dd (") + $.format.date(d, "ddd").substring(0,3) + ")"; }
+								},
+								y: {
+									axisLabelFormatter: function(d) { 
+										if (d!=0) {
+											return d;
+										} else {
+											return '';
+										}
+									}
+								}
+							},
 							underlayCallback : function(canvas, area, sbg_graph) {
 								function highlight_period(x_start,
 										x_end) {
@@ -106,6 +129,13 @@
 								}
 							}
 						});
+						
+						$("div#sbg_tou_chart div.dygraph-title").parent().append("<div class=\"top_legend\"></div>");
+						$("div#sbg_tou_chart div.top_legend")
+							.append("<ul class=\"top_legend_row\"><li class=\"period_offpeak\">Off-peak Hours</li><li class=\"period_midpeak\">Mid-peak Hours</li><li class=\"period_onpeak\">On-peak Hours</li></ul>");
+						$("div#sbg_tou_chart div.top_legend")
+							.append("<ul class=\"top_legend_row\"><li class=\"plot_line\">Surplus Baseload Generation</li></ul>");
+
 					</script>
 				</section>
 			</article>
@@ -120,13 +150,5 @@
 			<h3>Work in Progress</h3>
 		</footer>
 	</div>
-
-	<script>
-		window.jQuery
-				|| document
-						.write('<script src="resources/js/vendor/jquery-1.10.1.min.js"><\/script>');
-	</script>
-
-	<script src="resources/js/main.js"></script>
 </body>
 </html>
