@@ -52,28 +52,61 @@
 					<script>
 						var labelsJSON = ${labels};
 						var dataJSON = ${data};
+						var offpeak_color = "rgba(153, 193, 61, 0.6)";
+						var midpeak_color = "rgba(250, 201, 15, 0.6)";
+						var onpeak_color = "rgba(201, 90, 39, 0.6)";
 
 						for (var i = 0; i < dataJSON.length; i++) {
 							var dateStr = dataJSON[i][0];
 							dataJSON[i][0] = new Date(dateStr);
 						}
 
-						new Dygraph(
-								document.getElementById("myChart"),
-								dataJSON,
-								{
-									title : 'Surplus Baseload Generation Forecast',
-									xlabel : 'Date',
-									ylabel : 'Megawatts (MW)',
-									drawPoints : true,
-									valueRange : [ 0.0, 3250.0 ],
-									labels : labelsJSON
-								});
+						var sbg_graph = new Dygraph(
+						document.getElementById("myChart"),
+						dataJSON,
+						{
+							title : 'Surplus Baseload Generation Forecast',
+							xlabel : 'Date',
+							ylabel : 'Megawatts (MW)',
+							drawPoints : true,
+							valueRange : [ 0.0, 3250.0 ],				
+							labels : labelsJSON,
+							underlayCallback : function(canvas, area, sbg_graph) {
+								function highlight_period(x_start,
+										x_end) {
+									var canvas_left_x = sbg_graph
+											.toDomXCoord(x_start);
+									var canvas_right_x = sbg_graph
+											.toDomXCoord(x_end);
+									var canvas_width = canvas_right_x
+											- canvas_left_x;
+									canvas.fillRect(canvas_left_x,
+											area.y, canvas_width,
+											area.h);
+								}
+									
+								for (var i = 0; i < sbg_graph.numRows(); i++) {
+									var d = new Date(sbg_graph.getValue(i, 0));
+									var dow = d.getDay();
+									var hod = d.getHours();
+									
+									var start_x_highlight = sbg_graph.getValue(i, 0);
+									var end_x_highlight = start_x_highlight + 3600 * 1000;
+									
+									if (dow == 0 || dow == 6 || hod < 7 || hod > 18) {
+										canvas.fillStyle = offpeak_color;
+									} else if ((hod > 6 && hod < 11) || (hod > 16 && hod < 19)) {
+										canvas.fillStyle = onpeak_color;
+									} else if (hod > 10 && hod < 17) {
+										canvas.fillStyle = midpeak_color;
+									}
+
+									highlight_period(start_x_highlight,
+											end_x_highlight);
+								}
+							}
+						});
 					</script>
-					<ol>
-						<li>labels = ${labels}</li>
-						<li>data = ${data}</li>
-					</ol>
 				</section>
 			</article>
 
