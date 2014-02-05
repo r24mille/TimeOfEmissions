@@ -48,7 +48,7 @@
 						<fmt:formatDate type="date" value="${reportDate}"
 							dateStyle="medium" />
 					</h2>
-					<div id="myChart" style="width: 970px; height: 475px;"></div>
+					<div id="myChart" style="width: 100%; height: 475px;"></div>
 					<script>
 						var labelsJSON = ${labels};
 						var dataJSON = ${data};
@@ -91,7 +91,7 @@
 	<script>
 		window.jQuery
 				|| document
-						.write('<script src="resources/js/vendor/jquery-1.10.1.min.js"><\/script>')
+						.write('<script src="resources/js/vendor/jquery-1.10.1.min.js"><\/script>');
 	</script>
 
 	<script src="resources/js/main.js"></script>
