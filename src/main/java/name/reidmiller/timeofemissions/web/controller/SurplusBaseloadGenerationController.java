@@ -36,11 +36,15 @@ public class SurplusBaseloadGenerationController {
 		SurplusBaseloadGenerationClient sbgClient = IesoPublicReportBindingsConfig
 				.surplusBaseloadGenerationClient();
 		Calendar yestCal = Calendar.getInstance();
+		
+		// TODO Remove, temporarily getting data from Monday to be interesting
 		yestCal.roll(Calendar.DATE, false);
 		yestCal.roll(Calendar.DATE, false);
 		sbgClient.setUrlDate(yestCal.getTime());
+		
 		List<DailyForecast> dailyForecasts = sbgClient.getDocBody()
 				.getDailyForecast();
+		model.addAttribute("reportDate", sbgClient.getUrlDate());
 
 		List<String> labels = new ArrayList<String>();
 		labels.add("Date");
