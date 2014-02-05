@@ -11,8 +11,7 @@
 <link rel="stylesheet" href="resources/css/normalize.min.css">
 <link rel="stylesheet" href="resources/css/main.css">
 
-<script src="resources/js/vendor/modernizr-2.6.2-respond-1.1.0.min.js"></script>
-<script src="resources/js/Chart.js"></script>
+<script src="resources/js/dygraph-combined.js"></script>
 </head>
 <body>
 
@@ -28,7 +27,7 @@
 			</nav>
 		</header>
 	</div>
-	
+
 	${model.data}
 
 	<div class="main-container">
@@ -37,35 +36,35 @@
 			<article>
 				<header>
 					<h1>Demo</h1>
-					<p>My first attempt at creating something with the Chart.js
+					<p>My first attempt at creating something with the dygraph
 						library.</p>
 				</header>
 				<section>
 					<h2>Here Goes!</h2>
+					<div id="myChart" style="width: 960px; height: 500px;"></div>
+					<script>
+						var labelsJSON = ${labels};
+						var dataJSON = ${data};
+						
+						for ( var i = 0; i < dataJSON.length; i++ ) {
+							var dateStr = dataJSON[i][0];
+							dataJSON[i][0] = new Date(dateStr);
+						}
+						
+						new Dygraph(document.getElementById("myChart"),
+								dataJSON, {
+									title: 'Surplus Baseload Generation Forecast', 
+									xlabel: 'Date',
+									ylabel: 'Megawatts (MW)',
+									drawPoints: true,
+									valueRange: [0.0, 3250.0],
+									labels : labelsJSON
+								});
+					</script>
 					<ol>
 						<li>labels = ${labels}</li>
 						<li>data = ${data}</li>
 					</ol>
-					<canvas id="myChart" width="2500" height="1000"></canvas>
-					<script>
-						var labelsJSON = ${labels};
-						var dataJSON = ${data};
-						var data = {
-							labels : [1, "", 2, "", 3, "", 4, "", 5, "", 6, "", 7, ""],
-							datasets : [ {
-								fillColor : "rgba(220,220,220,0.5)",
-								strokeColor : "rgba(220,220,220,1)",
-								pointColor : "rgba(220,220,220,1)",
-								pointStrokeColor : "#fff",
-								data : dataJSON
-							}]
-						};
-
-						//Get the context of the canvas element we want to select
-						var ctx = document.getElementById("myChart")
-								.getContext("2d");
-						new Chart(ctx).Line(data);
-					</script>
 				</section>
 			</article>
 
@@ -80,14 +79,12 @@
 		</footer>
 	</div>
 
-	<!-- 	<script -->
-	<!-- 		src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script> -->
 	<script>
 		window.jQuery
 				|| document
-						.write('<script src="js/vendor/jquery-1.10.1.min.js"><\/script>')
+						.write('<script src="resources/js/vendor/jquery-1.10.1.min.js"><\/script>')
 	</script>
 
-	<script src="js/main.js"></script>
+	<script src="resources/js/main.js"></script>
 </body>
 </html>
