@@ -37,9 +37,7 @@ public class SurplusBaseloadGenerationController {
 				.surplusBaseloadGenerationClient();
 		Calendar yestCal = Calendar.getInstance();
 		
-		// TODO Remove, temporarily getting data from Monday to be interesting
-		yestCal.roll(Calendar.DATE, false);
-		yestCal.roll(Calendar.DATE, false);
+		// TODO Implement dates back to 20130103
 		sbgClient.setUrlDate(yestCal.getTime());
 		
 		List<DailyForecast> dailyForecasts = sbgClient.getDocBody()
