@@ -24,7 +24,7 @@
 			<nav>
 				<ul>
 					<li><a href="./sbg">Surplus Baseload Generation</a></li>
-					<li><a href="#">Ontario Generation Mix</a></li>
+					<li><a href="./generator_output">Ontario Generation Mix</a></li>
 				</ul>
 			</nav>
 		</header>
