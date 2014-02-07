@@ -156,18 +156,64 @@ nav a:hover {
 /* ==========================================================================
    Author's custom styles
    ========================================================================== */
+#sbg_tou_chart .dygraph-title {
+	font-size: 25px;
+}
+#sbg_tou_chart .dygraph-xlabel {
+	padding-top: 20px;
+	font-size: 15px;
+	font-weight: bold;
+	height: 20px;
+}
 
+#sbg_tou_chart .dygraph-ylabel {
+	font-size: 15px;
+	font-weight: bold;
+}
 
+div.top_legend {
+	display: block;
+	width: 50%;
+	margin: 5px auto 0px auto;
+}
 
+ul.top_legend_row {
+	height: 15px;
+	line-height: 14px;
+	margin: 0px auto 8px auto;
+	padding: 0px;
+	list-style-type: none;
+}
 
+ul.top_legend_row li {
+	font-weight: normal;
+	font-size: 14px;
+	line-height: 14px;
+	float: left;
+}
 
+li.period_offpeak, li.period_midpeak, li.period_onpeak {
+	padding-left: 16px;
+	margin-right: 15px;
+}
 
+li.period_offpeak {
+	background: url('../images/offpeak_legend_sq.gif') left no-repeat;
+}
 
+li.period_midpeak {
+	background: url('../images/midpeak_legend_sq.gif') left no-repeat;
+}
 
+li.period_onpeak {
+	background: url('../images/onpeak_legend_sq.gif') left no-repeat;
+}
 
-
-
-
+li.plot_line {
+	background: url('../images/plot_line_seg.gif') left no-repeat;
+	padding-left: 30px;
+	margin-left: 60px;
+}
 
 
 
@@ -258,7 +304,7 @@ nav a:hover {
    =============== */
 
     .wrapper {
-        width: 1026px; /* 1140px - 10% for margins */
+        /*width: 1026px; /* 1140px - 10% for margins */
         margin: 0 auto;
     }
 }
