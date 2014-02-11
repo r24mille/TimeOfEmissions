@@ -1,9 +1,12 @@
 package name.reidmiller.timeofemissions.web.controller;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import name.reidmiller.iesoreports.IesoPublicReportBindingsConfig;
@@ -36,19 +39,16 @@ public class SurplusBaseloadGenerationController {
 		SurplusBaseloadGenerationClient sbgClient = IesoPublicReportBindingsConfig
 				.surplusBaseloadGenerationClient();
 		Calendar yestCal = Calendar.getInstance();
-		
-		// TODO Implement dates back to 20130103
-		sbgClient.setUrlDate(yestCal.getTime());
-		
-		List<DailyForecast> dailyForecasts = sbgClient.getDocBody()
-				.getDailyForecast();
-		model.addAttribute("reportDate", sbgClient.getUrlDate());
 
 		List<String> labels = new ArrayList<String>();
-		labels.add("Date");
-		labels.add("Megawatts (MW)");
 		List<Object[]> data = new ArrayList<Object[]>();
 		try {
+			List<DailyForecast> dailyForecasts = sbgClient.getDefaultDocBody()
+					.getDailyForecast();
+			model.addAttribute("reportDate", new Date()); // TODO This is wrong
+
+			labels.add("Date");
+			labels.add("Megawatts (MW)");
 			for (DailyForecast dailyForecast : dailyForecasts) {
 				for (HourlyForecast hourlyForecast : dailyForecast
 						.getHourlyForecast()) {
@@ -64,6 +64,12 @@ public class SurplusBaseloadGenerationController {
 			}
 		} catch (ParseException e) {
 			logger.error(e.getLocalizedMessage());
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 

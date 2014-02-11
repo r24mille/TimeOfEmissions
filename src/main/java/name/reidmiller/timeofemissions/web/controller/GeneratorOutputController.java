@@ -1,5 +1,7 @@
 package name.reidmiller.timeofemissions.web.controller;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -43,34 +45,36 @@ public class GeneratorOutputController {
 		Calendar yestCal = Calendar.getInstance();
 		yestCal.roll(Calendar.DATE, false);
 
-		IMODocBody imoDocBody = genOutCapClient.getIMODocBody();
-		List<Generator> generators = imoDocBody.getGenerators().getGenerator();
-
-		model.addAttribute("reportDate", new Date());
-
-		List<String> individualLabels = new ArrayList<String>();
-		individualLabels.add("Date");
-		String[] aggregateLabels = new String[] { "Date", "Nuclear", "Coal",
-				"Other", "Gas", "Hydro", "Wind" };
-
-		List<String> individualColors = new ArrayList<String>();
-		String[] aggregateColors = new String[] { "orange", "black", "green",
-				"brown", "blue", "yellow" };
-
-		List<List<Object>> individualData = new ArrayList<List<Object>>();
-		List<List<Object>> aggregateData = new ArrayList<List<Object>>();
-
-		LinkedHashMap<String, HashMap<String, Float>> fuelTypeMap = new LinkedHashMap<String, HashMap<String, Float>>();
-		fuelTypeMap.put("NUCLEAR", new HashMap<String, Float>());
-		fuelTypeMap.put("COAL", new HashMap<String, Float>());
-		fuelTypeMap.put("OTHER", new HashMap<String, Float>());
-		fuelTypeMap.put("GAS", new HashMap<String, Float>());
-		fuelTypeMap.put("HYDRO", new HashMap<String, Float>());
-		fuelTypeMap.put("WIND", new HashMap<String, Float>());
-
-		List<String> timeStrings = new ArrayList<String>();
-
 		try {
+			IMODocBody imoDocBody = genOutCapClient.getDefaultIMODocBody();
+
+			List<Generator> generators = imoDocBody.getGenerators()
+					.getGenerator();
+
+			model.addAttribute("reportDate", new Date());
+
+			List<String> individualLabels = new ArrayList<String>();
+			individualLabels.add("Date");
+			String[] aggregateLabels = new String[] { "Date", "Nuclear",
+					"Coal", "Other", "Gas", "Hydro", "Wind" };
+
+			List<String> individualColors = new ArrayList<String>();
+			String[] aggregateColors = new String[] { "orange", "black",
+					"green", "brown", "blue", "yellow" };
+
+			List<List<Object>> individualData = new ArrayList<List<Object>>();
+			List<List<Object>> aggregateData = new ArrayList<List<Object>>();
+
+			LinkedHashMap<String, HashMap<String, Float>> fuelTypeMap = new LinkedHashMap<String, HashMap<String, Float>>();
+			fuelTypeMap.put("NUCLEAR", new HashMap<String, Float>());
+			fuelTypeMap.put("COAL", new HashMap<String, Float>());
+			fuelTypeMap.put("OTHER", new HashMap<String, Float>());
+			fuelTypeMap.put("GAS", new HashMap<String, Float>());
+			fuelTypeMap.put("HYDRO", new HashMap<String, Float>());
+			fuelTypeMap.put("WIND", new HashMap<String, Float>());
+
+			List<String> timeStrings = new ArrayList<String>();
+
 			for (Generator generator : generators) {
 				if (generator.getFuelType().equals("NUCLEAR")) {
 					individualColors.add("orange");
@@ -113,12 +117,14 @@ public class GeneratorOutputController {
 							.get(generator.getFuelType());
 					if (fuelHourMap.keySet().contains(timeString)) {
 						float fuelHourVal = fuelHourMap.get(timeString);
-						logger.debug("generatorName="+generator.getGeneratorName());
-						logger.debug("fuelHourVal="+fuelHourVal);
-						logger.debug("hourlyOutput="+hourlyOutput);
-						logger.debug("energyMW="+hourlyOutput.getEnergyMW());
+						logger.debug("generatorName="
+								+ generator.getGeneratorName());
+						logger.debug("fuelHourVal=" + fuelHourVal);
+						logger.debug("hourlyOutput=" + hourlyOutput);
+						logger.debug("energyMW=" + hourlyOutput.getEnergyMW());
 						if (hourlyOutput.getEnergyMW() != null) {
-							fuelHourVal = fuelHourVal + hourlyOutput.getEnergyMW();
+							fuelHourVal = fuelHourVal
+									+ hourlyOutput.getEnergyMW();
 						}
 						fuelHourMap.put(timeString, fuelHourVal);
 						fuelTypeMap.put(generator.getFuelType(), fuelHourMap);
@@ -130,35 +136,43 @@ public class GeneratorOutputController {
 					i++;
 				}
 			}
+
+			for (String timeString : timeStrings) {
+				try {
+					List<Object> xVals = new ArrayList<Object>();
+					xVals.add(genOutTimestampFormat.parseObject(timeString));
+					xVals.add(fuelTypeMap.get("NUCLEAR").get(timeString));
+					xVals.add(fuelTypeMap.get("COAL").get(timeString));
+					xVals.add(fuelTypeMap.get("OTHER").get(timeString));
+					xVals.add(fuelTypeMap.get("GAS").get(timeString));
+					xVals.add(fuelTypeMap.get("HYDRO").get(timeString));
+					xVals.add(fuelTypeMap.get("WIND").get(timeString));
+					aggregateData.add(xVals);
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+			model.addAttribute("aggregateLabels", gson.toJson(aggregateLabels));
+			model.addAttribute("aggregateData", gson.toJson(aggregateData));
+			model.addAttribute("aggregateColors", gson.toJson(aggregateColors));
+
+			model.addAttribute("individualLabels",
+					gson.toJson(individualLabels));
+			model.addAttribute("individualData", gson.toJson(individualData));
+			model.addAttribute("individualColors",
+					gson.toJson(individualColors));
 		} catch (ParseException e) {
 			logger.error(e.getLocalizedMessage());
 			e.printStackTrace();
+		} catch (MalformedURLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
-
-		for (String timeString : timeStrings) {
-			try {
-				List<Object> xVals = new ArrayList<Object>();
-				xVals.add(genOutTimestampFormat.parseObject(timeString));
-				xVals.add(fuelTypeMap.get("NUCLEAR").get(timeString));
-				xVals.add(fuelTypeMap.get("COAL").get(timeString));
-				xVals.add(fuelTypeMap.get("OTHER").get(timeString));
-				xVals.add(fuelTypeMap.get("GAS").get(timeString));
-				xVals.add(fuelTypeMap.get("HYDRO").get(timeString));
-				xVals.add(fuelTypeMap.get("WIND").get(timeString));
-				aggregateData.add(xVals);
-			} catch (ParseException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-
-		model.addAttribute("aggregateLabels", gson.toJson(aggregateLabels));
-		model.addAttribute("aggregateData", gson.toJson(aggregateData));
-		model.addAttribute("aggregateColors", gson.toJson(aggregateColors));
-
-		model.addAttribute("individualLabels", gson.toJson(individualLabels));
-		model.addAttribute("individualData", gson.toJson(individualData));
-		model.addAttribute("individualColors", gson.toJson(individualColors));
 
 		return "generator_output";
 	}
