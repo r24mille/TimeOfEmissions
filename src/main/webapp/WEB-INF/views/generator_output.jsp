@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <!DOCTYPE html>
 <html class="no-js">
 <head>
@@ -11,9 +12,12 @@
 
 <link rel="stylesheet" href="resources/css/normalize.min.css">
 <link rel="stylesheet" href="resources/css/main.css">
+<link rel="stylesheet"
+	href="resources/css/ui-lightness/jquery-ui-1.10.4.custom.css">
 <script src="resources/js/jquery-1.10.1.min.js"></script>
 <script src="resources/js/main.js"></script>
 <script src="resources/js/jquery-dateFormat.js"></script>
+<script src="resources/js/jquery-ui-1.10.4.custom.js"></script>
 <script src="resources/js/dygraph-combined.js"></script>
 </head>
 <body>
@@ -38,10 +42,31 @@
 				</header>
 				<section>
 					<h2>
-						Aggregate Generator Output on 
-						<fmt:formatDate type="date" value="${reportDate}"
-							dateStyle="medium" />
+						Aggregate Generator Output starting ${reportDate}
 					</h2>
+					<p>
+					<form:form method="POST">
+							<form:input path="startDateString" id="startDateString"/>
+							 <script>
+								$(function() {
+									$( "#startDateString" ).datepicker({
+									changeMonth: true,
+									changeYear: true
+									});
+								});
+							</script>
+							<form:input path="endDateString" id="endDateString"/>
+							 <script>
+								$(function() {
+									$( "#endDateString" ).datepicker({
+									changeMonth: true,
+									changeYear: true
+									});
+								});
+							</script>
+							<input type="submit" value="Update"/>
+						</form:form>
+					</p>
 					<div id="agg_gen_chart" style="width: 100%; height: 500px;"></div>
 					<script>
 						var aggregateLabelsJSON = ${aggregateLabels};
@@ -130,9 +155,7 @@
 				</section>
 				<section>
 					<h2>
-						Individual Generator Output on 
-						<fmt:formatDate type="date" value="${reportDate}"
-							dateStyle="medium" />
+						Individual Generator Output starting ${reportDate} 
 					</h2>
 					<div id="ind_gen_chart" style="width: 100%; height: 550px;"></div>
 					<script>

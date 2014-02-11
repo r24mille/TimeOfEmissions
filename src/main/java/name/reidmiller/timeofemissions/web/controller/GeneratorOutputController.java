@@ -10,17 +10,20 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import name.reidmiller.iesoreports.IesoPublicReportBindingsConfig;
 import name.reidmiller.iesoreports.client.GeneratorOutputCapabilityClient;
+import name.reidmiller.iesoreports.client.GeneratorOutputCapabilityClient.FuelType;
+import name.reidmiller.timeofemissions.web.command.GeneratorOutputCommand;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import ca.ieso.reports.schema.genoutputcapability.IMODocBody;
 import ca.ieso.reports.schema.genoutputcapability.IMODocBody.Generators.Generator;
@@ -30,6 +33,7 @@ import com.google.gson.Gson;
 
 @Controller
 public class GeneratorOutputController {
+	SimpleDateFormat jqueryTimeFormat = new SimpleDateFormat("MM/dd/yyyy");
 	SimpleDateFormat genOutTimestampFormat = new SimpleDateFormat(
 			"yyyy-MM-dd H:mm:ss");
 	Logger logger = LogManager.getLogger(this.getClass());
@@ -37,100 +41,133 @@ public class GeneratorOutputController {
 
 	@RequestMapping("/generator_output")
 	public String generatorOutput(
-			@RequestParam(value = "start", required = false) String start,
-			@RequestParam(value = "end", required = false) String end,
-			Model model) {
+			@ModelAttribute GeneratorOutputCommand command, Model model) {
 		GeneratorOutputCapabilityClient genOutCapClient = IesoPublicReportBindingsConfig
 				.generatorOutputCapabilityClient();
 		Calendar yestCal = Calendar.getInstance();
 		yestCal.roll(Calendar.DATE, false);
 
 		try {
-			IMODocBody imoDocBody = genOutCapClient.getDefaultIMODocBody();
-
-			List<Generator> generators = imoDocBody.getGenerators()
-					.getGenerator();
-
-			model.addAttribute("reportDate", new Date());
-
+			// Set up labels, colors, and data for output by individual
+			// generator graph
 			List<String> individualLabels = new ArrayList<String>();
 			individualLabels.add("Date");
+			List<String> individualColors = new ArrayList<String>();
+			List<List<Object>> individualData = new ArrayList<List<Object>>();
+
+			// Set up labels, colors, and data for aggregate output by fuel type
+			// graph
 			String[] aggregateLabels = new String[] { "Date", "Nuclear",
 					"Coal", "Other", "Gas", "Hydro", "Wind" };
-
-			List<String> individualColors = new ArrayList<String>();
 			String[] aggregateColors = new String[] { "orange", "black",
 					"green", "brown", "blue", "yellow" };
-
-			List<List<Object>> individualData = new ArrayList<List<Object>>();
 			List<List<Object>> aggregateData = new ArrayList<List<Object>>();
 
-			LinkedHashMap<String, HashMap<String, Float>> fuelTypeMap = new LinkedHashMap<String, HashMap<String, Float>>();
-			fuelTypeMap.put("NUCLEAR", new HashMap<String, Float>());
-			fuelTypeMap.put("COAL", new HashMap<String, Float>());
-			fuelTypeMap.put("OTHER", new HashMap<String, Float>());
-			fuelTypeMap.put("GAS", new HashMap<String, Float>());
-			fuelTypeMap.put("HYDRO", new HashMap<String, Float>());
-			fuelTypeMap.put("WIND", new HashMap<String, Float>());
+			// Get IMODocBodies for date range or for current day
+			List<IMODocBody> imoDocBodies = null;
+			if (command.getStartDateString() != null
+					&& !command.getStartDateString().isEmpty()
+					&& command.getEndDateString() != null
+					&& !command.getEndDateString().isEmpty()) {
+				Date startDate = jqueryTimeFormat.parse(command
+						.getStartDateString());
+				Date endDate = jqueryTimeFormat.parse(command
+						.getEndDateString());
+				imoDocBodies = genOutCapClient.getIMODocBodiesInDateRange(
+						startDate, endDate);
+			} else {
+				IMODocBody imoDocBody = genOutCapClient.getDefaultIMODocBody();
+				imoDocBodies = new ArrayList<IMODocBody>(1);
+				imoDocBodies.add(imoDocBody);
+			}
 
+			// GeneratorOutputCapabilityClient creates a summary by fuel type
+			HashMap<FuelType, LinkedHashMap<String, Float>> fuelTypeMap = genOutCapClient
+					.getHourlyFuelTypeTotals(imoDocBodies);
+
+			// Populate time strings used by both individual and aggregate
+			// graphs
+			LinkedHashMap<String, LinkedHashMap<String, Output>> individualGeneratorOutputs = new LinkedHashMap<String, LinkedHashMap<String, Output>>();
+			HashMap<String, FuelType> generatorFuelTypes = new HashMap<String, FuelType>();
 			List<String> timeStrings = new ArrayList<String>();
+			for (IMODocBody imoDocBody : imoDocBodies) {
+				for (Generator generator : imoDocBody.getGenerators()
+						.getGenerator()) {
+					for (Output output : generator.getOutputs().getOutput()) {
+						int clockHour = output.getHour() - 1;
+						String timeString = imoDocBody.getDate().toString()
+								+ " " + clockHour + ":00:00";
+						
+						if (!timeStrings.contains(timeString)) {
+							timeStrings.add(timeString);
+						}
 
-			for (Generator generator : generators) {
-				if (generator.getFuelType().equals("NUCLEAR")) {
+						// Create an individual generator output map keyed by
+						// generator name
+						if (individualGeneratorOutputs.containsKey(generator
+								.getGeneratorName())) {
+							LinkedHashMap<String, Output> timestampedOutputs = individualGeneratorOutputs
+									.get(generator.getGeneratorName());
+							timestampedOutputs.put(timeString, output);
+							individualGeneratorOutputs.put(
+									generator.getGeneratorName(),
+									timestampedOutputs);
+						} else {
+							LinkedHashMap<String, Output> timestampedOutputs = new LinkedHashMap<String, Output>();
+							timestampedOutputs.put(timeString, output);
+							individualGeneratorOutputs.put(
+									generator.getGeneratorName(),
+									timestampedOutputs);
+						}
+					}
+
+					// While iterating through generators, also create generator
+					// fuel type map
+					if (!generatorFuelTypes.containsKey(generator
+							.getGeneratorName())) {
+						generatorFuelTypes.put(generator.getGeneratorName(),
+								FuelType.valueOf(generator.getFuelType()));
+					}
+				}
+			}
+			
+			Set<String> generatorSet = individualGeneratorOutputs.keySet();
+			for (String generatorName : generatorSet) {
+				if (generatorFuelTypes.get(generatorName).equals(
+						FuelType.NUCLEAR)) {
 					individualColors.add("orange");
-				} else if (generator.getFuelType().equals("COAL")) {
+				} else if (generatorFuelTypes.get(generatorName).equals(
+						FuelType.COAL)) {
 					individualColors.add("black");
-				} else if (generator.getFuelType().equals("OTHER")) {
+				} else if (generatorFuelTypes.get(generatorName).equals(
+						FuelType.OTHER)) {
 					individualColors.add("green");
-				} else if (generator.getFuelType().equals("GAS")) {
+				} else if (generatorFuelTypes.get(generatorName).equals(
+						FuelType.GAS)) {
 					individualColors.add("brown");
-				} else if (generator.getFuelType().equals("HYDRO")) {
+				} else if (generatorFuelTypes.get(generatorName).equals(
+						FuelType.HYDRO)) {
 					individualColors.add("blue");
-				} else if (generator.getFuelType().equals("WIND")) {
+				} else if (generatorFuelTypes.get(generatorName).equals(
+						FuelType.WIND)) {
 					individualColors.add("yellow");
 				}
 
-				individualLabels.add(generator.getGeneratorName());
+				individualLabels.add(generatorName);
 
+				// TODO Fix up, this is kind of shiesty, trusting that all generators will have all entries
 				int i = 0;
-				for (Output hourlyOutput : generator.getOutputs().getOutput()) {
-					int clockHour = hourlyOutput.getHour() - 1;
-					String timeString = imoDocBody.getDate().toString() + " "
-							+ clockHour + ":00:00";
-
-					if (!timeStrings.contains(timeString)) {
-						timeStrings.add(timeString);
-					}
-
+				LinkedHashMap<String, Output> generatorTimeseriesMap = individualGeneratorOutputs.get(generatorName);
+				for (Entry<String, Output> timeseriesEntry : generatorTimeseriesMap.entrySet()) {
 					if (individualData.size() > i) {
 						List<Object> xVals = individualData.get(i);
-						xVals.add(hourlyOutput.getEnergyMW());
+						xVals.add(timeseriesEntry.getValue().getEnergyMW());
 						individualData.set(i, xVals);
 					} else {
 						List<Object> xVals = new ArrayList<Object>();
-						xVals.add(genOutTimestampFormat.parse(timeString));
-						xVals.add(hourlyOutput.getEnergyMW());
+						xVals.add(genOutTimestampFormat.parse(timeseriesEntry.getKey()));
+						xVals.add(timeseriesEntry.getValue().getEnergyMW());
 						individualData.add(xVals);
-					}
-
-					HashMap<String, Float> fuelHourMap = fuelTypeMap
-							.get(generator.getFuelType());
-					if (fuelHourMap.keySet().contains(timeString)) {
-						float fuelHourVal = fuelHourMap.get(timeString);
-						logger.debug("generatorName="
-								+ generator.getGeneratorName());
-						logger.debug("fuelHourVal=" + fuelHourVal);
-						logger.debug("hourlyOutput=" + hourlyOutput);
-						logger.debug("energyMW=" + hourlyOutput.getEnergyMW());
-						if (hourlyOutput.getEnergyMW() != null) {
-							fuelHourVal = fuelHourVal
-									+ hourlyOutput.getEnergyMW();
-						}
-						fuelHourMap.put(timeString, fuelHourVal);
-						fuelTypeMap.put(generator.getFuelType(), fuelHourMap);
-					} else {
-						fuelHourMap.put(timeString, hourlyOutput.getEnergyMW());
-						fuelTypeMap.put(generator.getFuelType(), fuelHourMap);
 					}
 
 					i++;
@@ -141,12 +178,18 @@ public class GeneratorOutputController {
 				try {
 					List<Object> xVals = new ArrayList<Object>();
 					xVals.add(genOutTimestampFormat.parseObject(timeString));
-					xVals.add(fuelTypeMap.get("NUCLEAR").get(timeString));
-					xVals.add(fuelTypeMap.get("COAL").get(timeString));
-					xVals.add(fuelTypeMap.get("OTHER").get(timeString));
-					xVals.add(fuelTypeMap.get("GAS").get(timeString));
-					xVals.add(fuelTypeMap.get("HYDRO").get(timeString));
-					xVals.add(fuelTypeMap.get("WIND").get(timeString));
+					xVals.add(fuelTypeMap.get(FuelType.valueOf("NUCLEAR")).get(
+							timeString));
+					xVals.add(fuelTypeMap.get(FuelType.valueOf("COAL")).get(
+							timeString));
+					xVals.add(fuelTypeMap.get(FuelType.valueOf("OTHER")).get(
+							timeString));
+					xVals.add(fuelTypeMap.get(FuelType.valueOf("GAS")).get(
+							timeString));
+					xVals.add(fuelTypeMap.get(FuelType.valueOf("HYDRO")).get(
+							timeString));
+					xVals.add(fuelTypeMap.get(FuelType.valueOf("WIND")).get(
+							timeString));
 					aggregateData.add(xVals);
 				} catch (ParseException e) {
 					// TODO Auto-generated catch block
@@ -154,6 +197,8 @@ public class GeneratorOutputController {
 				}
 			}
 
+			model.addAttribute("reportDate", imoDocBodies.get(0).getDate()); // TODO
+																				// wrong
 			model.addAttribute("aggregateLabels", gson.toJson(aggregateLabels));
 			model.addAttribute("aggregateData", gson.toJson(aggregateData));
 			model.addAttribute("aggregateColors", gson.toJson(aggregateColors));
@@ -174,6 +219,7 @@ public class GeneratorOutputController {
 			e1.printStackTrace();
 		}
 
+		model.addAttribute("command", command);
 		return "generator_output";
 	}
 }

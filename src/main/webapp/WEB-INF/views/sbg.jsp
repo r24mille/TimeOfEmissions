@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <!DOCTYPE html>
 <html class="no-js">
 <head>
@@ -11,9 +12,12 @@
 
 <link rel="stylesheet" href="resources/css/normalize.min.css">
 <link rel="stylesheet" href="resources/css/main.css">
+<link rel="stylesheet"
+	href="resources/css/ui-lightness/jquery-ui-1.10.4.custom.css">
 <script src="resources/js/jquery-1.10.1.min.js"></script>
 <script src="resources/js/main.js"></script>
 <script src="resources/js/jquery-dateFormat.js"></script>
+<script src="resources/js/jquery-ui-1.10.4.custom.js"></script>
 <script src="resources/js/dygraph-combined.js"></script>
 </head>
 <body>
@@ -39,17 +43,27 @@
 					<p>
 						Ontario's Independent Electricity System Operator (IESO) <a
 							href="http://www.ieso.ca/imoweb/marketdata/sbg.asp"
-							target="_blank">defines</a> surplus baseload generation as, 
+							target="_blank">defines</a> surplus baseload generation as,
 						"electricity production from baseload facilities (such as nuclear,
 						hydro and wind) is greater than Ontario demand."
 					</p>
+					<p>
+						<form:form method="POST">
+							<form:input path="startDateString" id="startDateString"/>
+							 <script>
+								$(function() {
+									$( "#startDateString" ).datepicker({
+									changeMonth: true,
+									changeYear: true
+									});
+								});
+							</script>
+							<input type="submit" value="Update"/>
+						</form:form>
+					</p>
 				</header>
 				<section>
-					<h2>
-						SBG Forecast from
-						<fmt:formatDate type="date" value="${reportDate}"
-							dateStyle="medium" />
-					</h2>
+					<h2>SBG Forecast from ${reportDate}</h2>
 					<div id="sbg_tou_chart" style="width: 100%; height: 475px;"></div>
 					<script>
 						var labelsJSON = ${labels};
@@ -67,7 +81,7 @@
 						document.getElementById("sbg_tou_chart"),
 						dataJSON,
 						{
-							title : "Surplus Baseload Generation Forecast",
+							title : "Surplus Baseload Generation Forecast (Hourly)",
 							titleHeight : 75,
 							xlabel : "Date",
 							ylabel : "Megawatts (MW)",

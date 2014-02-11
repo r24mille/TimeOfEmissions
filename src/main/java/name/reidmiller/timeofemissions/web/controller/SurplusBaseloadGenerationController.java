@@ -5,20 +5,22 @@ import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 import name.reidmiller.iesoreports.IesoPublicReportBindingsConfig;
 import name.reidmiller.iesoreports.client.SurplusBaseloadGenerationClient;
+import name.reidmiller.timeofemissions.web.command.SurplusBaseloadGenerationCommand;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
+import ca.ieso.reports.schema.sbg.DocHeader;
+import ca.ieso.reports.schema.sbg.Document.DocBody;
 import ca.ieso.reports.schema.sbg.Document.DocBody.DailyForecast;
 import ca.ieso.reports.schema.sbg.Document.DocBody.DailyForecast.HourlyForecast;
 
@@ -26,6 +28,7 @@ import com.google.gson.Gson;
 
 @Controller
 public class SurplusBaseloadGenerationController {
+	SimpleDateFormat jqueryTimeFormat = new SimpleDateFormat("MM/dd/yyyy");
 	SimpleDateFormat sbgTimestampFormat = new SimpleDateFormat(
 			"yyyy-MM-dd H:mm:ss");
 	Logger logger = LogManager.getLogger(this.getClass());
@@ -33,19 +36,26 @@ public class SurplusBaseloadGenerationController {
 
 	@RequestMapping("/sbg")
 	public String sbg(
-			@RequestParam(value = "start", required = false) String start,
-			@RequestParam(value = "end", required = false) String end,
+			@ModelAttribute SurplusBaseloadGenerationCommand command,
 			Model model) {
 		SurplusBaseloadGenerationClient sbgClient = IesoPublicReportBindingsConfig
 				.surplusBaseloadGenerationClient();
-		Calendar yestCal = Calendar.getInstance();
 
 		List<String> labels = new ArrayList<String>();
 		List<Object[]> data = new ArrayList<Object[]>();
 		try {
-			List<DailyForecast> dailyForecasts = sbgClient.getDefaultDocBody()
-					.getDailyForecast();
-			model.addAttribute("reportDate", new Date()); // TODO This is wrong
+			DocBody docBody = null;
+			DocHeader docHeader = null;
+			if (command.getStartDateString() != null && !command.getStartDateString().isEmpty()) {
+				Date startDate = jqueryTimeFormat.parse(command.getStartDateString());
+				docBody = sbgClient.getDocBodyForDate(startDate);
+				docHeader = sbgClient.getDocHeaderForDate(startDate);
+			} else {
+				docBody = sbgClient.getDefaultDocBody();
+				docHeader = sbgClient.getDefaultDocHeader();
+			}
+			List<DailyForecast> dailyForecasts = docBody.getDailyForecast();
+			model.addAttribute("reportDate", docHeader.getCreatedAt().toString());
 
 			labels.add("Date");
 			labels.add("Megawatts (MW)");
@@ -76,6 +86,7 @@ public class SurplusBaseloadGenerationController {
 		logger.debug("labels=" + gson.toJson(labels));
 		logger.debug("data=" + gson.toJson(data));
 
+		model.addAttribute("command", command);
 		model.addAttribute("labels", gson.toJson(labels));
 		model.addAttribute("data", gson.toJson(data));
 		return "sbg";
