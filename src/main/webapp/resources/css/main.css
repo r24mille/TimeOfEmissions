@@ -156,24 +156,24 @@ nav a:hover {
 /* ==========================================================================
    Author's custom styles
    ========================================================================== */
-#sbg_tou_chart .dygraph-title {
+.dygraph-title {
 	font-size: 25px;
 }
-#sbg_tou_chart .dygraph-xlabel {
+.dygraph-xlabel {
 	padding-top: 20px;
 	font-size: 15px;
 	font-weight: bold;
 	height: 20px;
 }
 
-#sbg_tou_chart .dygraph-ylabel {
+.dygraph-ylabel {
 	font-size: 15px;
 	font-weight: bold;
 }
 
 div.top_legend {
 	display: block;
-	width: 50%;
+	width: 400px;
 	margin: 5px auto 0px auto;
 }
 
@@ -190,6 +190,7 @@ ul.top_legend_row li {
 	font-size: 14px;
 	line-height: 14px;
 	float: left;
+	width: 100px;
 }
 
 li.period_offpeak, li.period_midpeak, li.period_onpeak {
@@ -212,7 +213,32 @@ li.period_onpeak {
 li.plot_line {
 	background: url('../images/plot_line_seg.gif') left no-repeat;
 	padding-left: 30px;
-	margin-left: 60px;
+	text-align: left;
+	width: 50px;
+}
+
+li.coal_line {
+	background: url('../images/coal_line_seg.gif') left no-repeat;
+}
+
+li.gas_line {
+	background: url('../images/gas_line_seg.gif') left no-repeat;
+}
+
+li.hydro_line {
+	background: url('../images/hydro_line_seg.gif') left no-repeat;
+}
+
+li.nuclear_line {
+	background: url('../images/nuclear_line_seg.gif') left no-repeat;
+}
+
+li.other_line {
+	background: url('../images/other_line_seg.gif') left no-repeat;
+}
+
+li.wind_line {
+	background: url('../images/wind_line_seg.gif') left no-repeat;
 }
 
 

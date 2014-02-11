@@ -85,8 +85,8 @@
 						document.getElementById("agg_gen_chart"),
 						aggregateDataJSON,
 						{
-							title : "Aggregate Generator Output by Fuel Type",
-							titleHeight : 75,
+							title : "Aggregate Generator Output by Fuel Type (Hourly)",
+							titleHeight : 100,
 							xlabel : "Date",
 							ylabel : "Megawatts (MW)",
 							drawPoints : true,
@@ -99,6 +99,9 @@
 							labelsDivWidth: 300,			
 							labels : aggregateLabelsJSON,
 							axes: {
+								x: {
+									axisLabelFormatter: function(d) { return $.format.date(d, "MM/dd (") + $.format.date(d, "ddd").substring(0,3) + ")"; }
+								},
 								y: {
 									axisLabelFormatter: function(d) { 
 										if (d!=0) {
@@ -149,8 +152,9 @@
 						$("div#agg_gen_chart div.top_legend")
 							.append("<ul class=\"top_legend_row\"><li class=\"period_offpeak\">Off-peak Hours</li><li class=\"period_midpeak\">Mid-peak Hours</li><li class=\"period_onpeak\">On-peak Hours</li></ul>");
 						$("div#agg_gen_chart div.top_legend")
-							.append("<ul class=\"top_legend_row\"><li class=\"plot_line\">Power Generated</li></ul>");
-
+							.append("<ul class=\"top_legend_row\"><li class=\"plot_line nuclear_line\">Nuclear</li><li class=\"plot_line hydro_line\">Hydroelectric</li><li class=\"plot_line wind_line\">Wind</li></ul>");
+						$("div#agg_gen_chart div.top_legend")
+						.append("<ul class=\"top_legend_row\"><li class=\"plot_line gas_line\">Gas</li><li class=\"plot_line coal_line\">Coal</li><li class=\"plot_line other_line\">Other</li></ul>");
 					</script>
 				</section>
 				<section>
