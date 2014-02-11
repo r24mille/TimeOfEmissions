@@ -40,3 +40,4 @@ target/*
 /bin
 /target
 /build
+*/META-INF/MANIFEST.MF
