@@ -293,7 +293,9 @@ li.other_sq {
 li.wind_sq {
 	background: url('../images/wind_sq.gif') left no-repeat;
 }
-
+#ui-datepicker-div {
+	z-index: 11 !important;
+}
 
 
 /* ==========================================================================
