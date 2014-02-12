@@ -89,7 +89,7 @@
 							title : "Emissions by Fuel Type (Hourly)",
 							titleHeight : 100,
 							xlabel : "Time of Day",
-							ylabel : "Carbon Dioxide Emissions (kg)",
+							ylabel : "Carbon Dioxide Emissions (metric tonnes)",
 							drawPoints : true,
 							fillGraph: false,
 							fillAlpha: 1,
@@ -101,10 +101,6 @@
 							labels : aggregateLabelsJSON,
 							stackedGraph : true,
 							axes: {
-								x: {
-									axisLabelFormatter: function(d) { return $.format.date(d, "hp").replace(/\./g,""); }, 
-									pixelsPerLabel: 40
-								},
 								y: {
 									axisLabelFormatter: function(d) { 
 										if (d!=0) {
@@ -155,9 +151,9 @@
 						$("div#agg_gen_chart div.top_legend")
 							.append("<ul class=\"top_legend_row\"><li class=\"period_offpeak\">Off-peak Hours</li><li class=\"period_midpeak\">Mid-peak Hours</li><li class=\"period_onpeak\">On-peak Hours</li></ul>");
 						$("div#agg_gen_chart div.top_legend")
-							.append("<ul class=\"top_legend_row\"><li class=\"plot_line nuclear_line_nodot\">Nuclear</li><li class=\"plot_line hydro_line_nodot\">Hydroelectric</li><li class=\"plot_line wind_line_nodot\">Wind</li></ul>");
+							.append("<ul class=\"top_legend_row\"><li class=\"plot_line nuclear_sq\">Nuclear</li><li class=\"plot_line hydro_sq\">Hydroelectric</li><li class=\"plot_line wind_sq\">Wind</li></ul>");
 						$("div#agg_gen_chart div.top_legend")
-						.append("<ul class=\"top_legend_row\"><li class=\"plot_line gas_line_nodot\">Natural Gas</li><li class=\"plot_line coal_line_nodot\">Coal</li><li class=\"plot_line other_line_nodot\">Other</li></ul>");
+						.append("<ul class=\"top_legend_row\"><li class=\"plot_line gas_sq\">Natural Gas</li><li class=\"plot_line coal_sq\">Coal</li><li class=\"plot_line other_sq\">Other</li></ul>");
 					</script>
 				</section>
 			</article>

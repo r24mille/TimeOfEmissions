@@ -270,6 +270,30 @@ li.wind_line_nodot {
 	background: url('../images/wind_line_seg_nodot.gif') left no-repeat;
 }
 
+li.coal_sq {
+	background: url('../images/coal_sq.gif') left no-repeat;
+}
+
+li.gas_sq {
+	background: url('../images/gas_sq.gif') left no-repeat;
+}
+
+li.hydro_sq {
+	background: url('../images/hydro_sq.gif') left no-repeat;
+}
+
+li.nuclear_sq {
+	background: url('../images/nuclear_sq.gif') left no-repeat;
+}
+
+li.other_sq {
+	background: url('../images/other_sq.gif') left no-repeat;
+}
+
+li.wind_sq {
+	background: url('../images/wind_sq.gif') left no-repeat;
+}
+
 
 
 /* ==========================================================================

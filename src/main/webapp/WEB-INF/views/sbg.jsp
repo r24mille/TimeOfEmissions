@@ -97,8 +97,7 @@
 							labels : labelsJSON,
 							axes: {
 								x: {
-									axisLabelFormatter: function(d) { return $.format.date(d, "hp").replace(/\./g,""); }, 
-									pixelsPerLabel: 40
+									axisLabelFormatter: function(d) { return $.format.date(d, "MM/dd hp").replace(/\./g,""); }, 
 								},
 								y: {
 									axisLabelFormatter: function(d) { 
