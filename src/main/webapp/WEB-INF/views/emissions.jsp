@@ -47,7 +47,7 @@
 					</h2>
 					<p>
 					<form:form method="POST">
-							<form:input path="startDateString" id="startDateString"/>
+							<form:label path="startDateString">Start Date</form:label><form:input path="startDateString" id="startDateString"/>
 							 <script>
 								$(function() {
 									$( "#startDateString" ).datepicker({
@@ -56,7 +56,7 @@
 									});
 								});
 							</script>
-							<form:input path="endDateString" id="endDateString"/>
+							<form:label path="endDateString">End Date</form:label><form:input path="endDateString" id="endDateString"/>
 							 <script>
 								$(function() {
 									$( "#endDateString" ).datepicker({

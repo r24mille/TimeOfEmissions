@@ -50,7 +50,7 @@
 					</p>
 					<p>
 						<form:form method="POST">
-							<form:input path="startDateString" id="startDateString"/>
+							<form:label path="startDateString">Forecast Date</form:label><form:input path="startDateString" id="startDateString"/>
 							 <script>
 								$(function() {
 									$( "#startDateString" ).datepicker({
