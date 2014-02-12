@@ -37,19 +37,16 @@
 
 	<div class="main-container">
 		<div class="main wrapper clearfix">
-
 			<article>
 				<header>
-					<h1>Surplus Baseload Generation (SBG)</h1>
+					<h1>Carbon Dioxide Emissions</h1>
+				</header>
+				<section>
+					<h2>
+						Emissions by fuel type starting ${reportDate}
+					</h2>
 					<p>
-						Ontario's Independent Electricity System Operator (IESO) <a
-							href="http://www.ieso.ca/imoweb/marketdata/sbg.asp"
-							target="_blank">defines</a> surplus baseload generation as,
-						"electricity production from baseload facilities (such as nuclear,
-						hydro and wind) is greater than Ontario demand."
-					</p>
-					<p>
-						<form:form method="POST">
+					<form:form method="POST">
 							<form:input path="startDateString" id="startDateString"/>
 							 <script>
 								$(function() {
@@ -59,42 +56,50 @@
 									});
 								});
 							</script>
+							<form:input path="endDateString" id="endDateString"/>
+							 <script>
+								$(function() {
+									$( "#endDateString" ).datepicker({
+									changeMonth: true,
+									changeYear: true
+									});
+								});
+							</script>
 							<input type="submit" value="Update"/>
 						</form:form>
 					</p>
-				</header>
-				<section>
-					<h2>SBG Forecast from ${reportDate}</h2>
-					<div id="sbg_tou_chart" style="width: 100%; height: 475px;"></div>
+					<div id="agg_gen_chart" style="width: 100%; height: 500px;"></div>
 					<script>
-						var labelsJSON = ${labels};
-						var dataJSON = ${data};
+						var aggregateLabelsJSON = ${aggregateLabels};
+						var aggregateDataJSON = ${aggregateData};
+						var aggregateColorsJSON = ${aggregateColors};
 						var offpeak_color = "rgba(153, 193, 61, 0.6)";
 						var midpeak_color = "rgba(250, 201, 15, 0.6)";
 						var onpeak_color = "rgba(201, 90, 39, 0.6)";
 
-						for (var i = 0; i < dataJSON.length; i++) {
-							var dateStr = dataJSON[i][0];
-							dataJSON[i][0] = new Date(dateStr);
+						for (var i = 0; i < aggregateDataJSON.length; i++) {
+							var dateStr = aggregateDataJSON[i][0];
+							aggregateDataJSON[i][0] = new Date(dateStr);
 						}
 
 						var sbg_graph = new Dygraph(
-						document.getElementById("sbg_tou_chart"),
-						dataJSON,
+						document.getElementById("agg_gen_chart"),
+						aggregateDataJSON,
 						{
-							title : "Surplus Baseload Generation Forecast (Hourly)",
-							titleHeight : 75,
-							xlabel : "Date",
-							ylabel : "Megawatts (MW)",
+							title : "Emissions by Fuel Type (Hourly)",
+							titleHeight : 100,
+							xlabel : "Time of Day",
+							ylabel : "Carbon Dioxide Emissions (kg)",
 							drawPoints : true,
 							fillGraph: false,
-							fillAlpha: 0.25,
+							fillAlpha: 1,
 							strokeWidth: 1.5,
-							pointSize: 2,
-							yAxisLabelWidth: 65,
-							colors: ["#000000"],
+							pointSize: 0,
+							yAxisLabelWidth: 80,
+							colors: aggregateColorsJSON,
 							labelsDivWidth: 300,			
-							labels : labelsJSON,
+							labels : aggregateLabelsJSON,
+							stackedGraph : true,
 							axes: {
 								x: {
 									axisLabelFormatter: function(d) { return $.format.date(d, "hp").replace(/\./g,""); }, 
@@ -146,12 +151,13 @@
 							}
 						});
 						
-						$("div#sbg_tou_chart div.dygraph-title").parent().append("<div class=\"top_legend\"></div>");
-						$("div#sbg_tou_chart div.top_legend")
+						$("div#agg_gen_chart div.dygraph-title").parent().append("<div class=\"top_legend\"></div>");
+						$("div#agg_gen_chart div.top_legend")
 							.append("<ul class=\"top_legend_row\"><li class=\"period_offpeak\">Off-peak Hours</li><li class=\"period_midpeak\">Mid-peak Hours</li><li class=\"period_onpeak\">On-peak Hours</li></ul>");
-						$("div#sbg_tou_chart div.top_legend")
-							.append("<ul class=\"top_legend_row\"><li class=\"plot_line\">Surplus Baseload Generation</li></ul>");
-
+						$("div#agg_gen_chart div.top_legend")
+							.append("<ul class=\"top_legend_row\"><li class=\"plot_line nuclear_line_nodot\">Nuclear</li><li class=\"plot_line hydro_line_nodot\">Hydroelectric</li><li class=\"plot_line wind_line_nodot\">Wind</li></ul>");
+						$("div#agg_gen_chart div.top_legend")
+						.append("<ul class=\"top_legend_row\"><li class=\"plot_line gas_line_nodot\">Natural Gas</li><li class=\"plot_line coal_line_nodot\">Coal</li><li class=\"plot_line other_line_nodot\">Other</li></ul>");
 					</script>
 				</section>
 			</article>

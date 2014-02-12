@@ -16,7 +16,7 @@ import java.util.Set;
 import name.reidmiller.iesoreports.IesoPublicReportBindingsConfig;
 import name.reidmiller.iesoreports.client.GeneratorOutputCapabilityClient;
 import name.reidmiller.iesoreports.client.GeneratorOutputCapabilityClient.FuelType;
-import name.reidmiller.timeofemissions.web.command.GeneratorOutputCommand;
+import name.reidmiller.timeofemissions.web.command.EmissionsCommand;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,16 +32,16 @@ import ca.ieso.reports.schema.genoutputcapability.IMODocBody.Generators.Generato
 import com.google.gson.Gson;
 
 @Controller
-public class GeneratorOutputController {
+public class EmissionsController {
 	SimpleDateFormat jqueryTimeFormat = new SimpleDateFormat("MM/dd/yyyy");
 	SimpleDateFormat genOutTimestampFormat = new SimpleDateFormat(
 			"yyyy-MM-dd H:mm:ss");
 	Logger logger = LogManager.getLogger(this.getClass());
 	Gson gson = new Gson();
 
-	@RequestMapping("/generator_output")
-	public String generatorOutput(
-			@ModelAttribute GeneratorOutputCommand command, Model model) {
+	@RequestMapping("/emissions")
+	public String emissions(
+			@ModelAttribute EmissionsCommand command, Model model) {
 		GeneratorOutputCapabilityClient genOutCapClient = IesoPublicReportBindingsConfig
 				.generatorOutputCapabilityClient();
 		Calendar yestCal = Calendar.getInstance();
@@ -177,17 +177,17 @@ public class GeneratorOutputController {
 					List<Object> xVals = new ArrayList<Object>();
 					xVals.add(genOutTimestampFormat.parseObject(timeString));
 					xVals.add(fuelTypeMap.get(FuelType.valueOf("COAL")).get(
-							timeString));
+							timeString) * 1.001);
 					xVals.add(fuelTypeMap.get(FuelType.valueOf("GAS")).get(
-							timeString));
+							timeString) * 0.469);
 					xVals.add(fuelTypeMap.get(FuelType.valueOf("WIND")).get(
-							timeString));
+							timeString) * 0.012);
 					xVals.add(fuelTypeMap.get(FuelType.valueOf("HYDRO")).get(
-							timeString));
+							timeString) * 0.004);
 					xVals.add(fuelTypeMap.get(FuelType.valueOf("OTHER")).get(
-							timeString));
+							timeString) * 0.018);
 					xVals.add(fuelTypeMap.get(FuelType.valueOf("NUCLEAR")).get(
-							timeString));
+							timeString) * 0.016);
 					aggregateData.add(xVals);
 				} catch (ParseException e) {
 					// TODO Auto-generated catch block
@@ -218,6 +218,6 @@ public class GeneratorOutputController {
 		}
 
 		model.addAttribute("command", command);
-		return "generator_output";
+		return "emissions";
 	}
 }

@@ -160,7 +160,7 @@ nav a:hover {
 	font-size: 25px;
 }
 .dygraph-xlabel {
-	padding-top: 20px;
+	/*padding-top: 20px;*/
 	font-size: 15px;
 	font-weight: bold;
 	height: 20px;
@@ -217,6 +217,11 @@ li.plot_line {
 	width: 50px;
 }
 
+#sbg_tou_chart li.plot_line {
+	width: 200px;
+	margin-left: 90px;
+}
+
 li.coal_line {
 	background: url('../images/coal_line_seg.gif') left no-repeat;
 }
@@ -239,6 +244,30 @@ li.other_line {
 
 li.wind_line {
 	background: url('../images/wind_line_seg.gif') left no-repeat;
+}
+
+li.coal_line_nodot {
+	background: url('../images/coal_line_seg_nodot.gif') left no-repeat;
+}
+
+li.gas_line_nodot {
+	background: url('../images/gas_line_seg_nodot.gif') left no-repeat;
+}
+
+li.hydro_line_nodot {
+	background: url('../images/hydro_line_seg_nodot.gif') left no-repeat;
+}
+
+li.nuclear_line_nodot {
+	background: url('../images/nuclear_line_seg_nodot.gif') left no-repeat;
+}
+
+li.other_line_nodot {
+	background: url('../images/other_line_seg_nodot.gif') left no-repeat;
+}
+
+li.wind_line_nodot {
+	background: url('../images/wind_line_seg_nodot.gif') left no-repeat;
 }
 
 
@@ -314,12 +343,12 @@ li.wind_line {
 
     .main article {
         float: left;
-        width: 57%;
+        width: 65%;
     }
 
     .main aside {
         float: right;
-        width: 28%;
+        width: 20%;
     }
 }
 

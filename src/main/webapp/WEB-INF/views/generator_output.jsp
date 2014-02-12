@@ -29,6 +29,7 @@
 				<ul>
 					<li><a href="./sbg">Surplus Baseload Generation</a></li>
 					<li><a href="./generator_output">Ontario Generation Mix</a></li>
+					<li><a href="./emissions">Emissions</a></li>
 				</ul>
 			</nav>
 		</header>
@@ -91,9 +92,9 @@
 							ylabel : "Megawatts (MW)",
 							drawPoints : true,
 							fillGraph: false,
-							fillAlpha: 0.25,
+							fillAlpha: 1,
 							strokeWidth: 1.5,
-							pointSize: 2,
+							pointSize: 0,
 							yAxisLabelWidth: 65,
 							colors: aggregateColorsJSON,
 							labelsDivWidth: 300,			
