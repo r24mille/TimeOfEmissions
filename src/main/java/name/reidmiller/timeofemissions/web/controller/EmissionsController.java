@@ -16,6 +16,7 @@ import java.util.Set;
 import name.reidmiller.iesoreports.IesoPublicReportBindingsConfig;
 import name.reidmiller.iesoreports.client.GeneratorOutputCapabilityClient;
 import name.reidmiller.iesoreports.client.GeneratorOutputCapabilityClient.FuelType;
+import name.reidmiller.timeofemissions.model.FuelTypeMetadata;
 import name.reidmiller.timeofemissions.web.command.EmissionsCommand;
 
 import org.apache.logging.log4j.LogManager;
@@ -40,8 +41,8 @@ public class EmissionsController {
 	Gson gson = new Gson();
 
 	@RequestMapping("/emissions")
-	public String emissions(
-			@ModelAttribute EmissionsCommand command, Model model) {
+	public String emissions(@ModelAttribute EmissionsCommand command,
+			Model model) {
 		GeneratorOutputCapabilityClient genOutCapClient = IesoPublicReportBindingsConfig
 				.generatorOutputCapabilityClient();
 		Calendar yestCal = Calendar.getInstance();
@@ -57,8 +58,15 @@ public class EmissionsController {
 
 			// Set up labels, colors, and data for aggregate output by fuel type
 			// graph
-			String[] aggregateLabels = new String[] { "Date", "Coal", "Gas", "Wind", "Hydro", "Other", "Nuclear" };
-			String[] aggregateColors = new String[] { "#000000", "#A52A2A", "#79D24C", "#204C79", "#999966", "#F9A848" };
+			String[] aggregateLabels = new String[] { "Date", "Coal",
+					"Natural Gas", "Wind", "Hydro", "Other", "Nuclear" };
+			String[] aggregateColors = new String[] {
+					FuelTypeMetadata.COAL_GRAPH_COLOR,
+					FuelTypeMetadata.NATURAL_GAS_GRAPH_COLOR,
+					FuelTypeMetadata.WIND_GRAPH_COLOR,
+					FuelTypeMetadata.HYDROELECTRIC_GRAPH_COLOR,
+					FuelTypeMetadata.BIOMASS_GRAPH_COLOR,
+					FuelTypeMetadata.NUCLEAR_GRAPH_COLOR };
 			List<List<Object>> aggregateData = new ArrayList<List<Object>>();
 
 			// Get IMODocBodies for date range or for current day
@@ -95,7 +103,7 @@ public class EmissionsController {
 						int clockHour = output.getHour() - 1;
 						String timeString = imoDocBody.getDate().toString()
 								+ " " + clockHour + ":00:00";
-						
+
 						if (!timeStrings.contains(timeString)) {
 							timeStrings.add(timeString);
 						}
@@ -128,42 +136,48 @@ public class EmissionsController {
 					}
 				}
 			}
-			
+
 			Set<String> generatorSet = individualGeneratorOutputs.keySet();
 			for (String generatorName : generatorSet) {
 				if (generatorFuelTypes.get(generatorName).equals(
 						FuelType.NUCLEAR)) {
-					individualColors.add("orange");
+					individualColors.add(FuelTypeMetadata.NUCLEAR_GRAPH_COLOR);
 				} else if (generatorFuelTypes.get(generatorName).equals(
 						FuelType.COAL)) {
-					individualColors.add("black");
+					individualColors.add(FuelTypeMetadata.COAL_GRAPH_COLOR);
 				} else if (generatorFuelTypes.get(generatorName).equals(
 						FuelType.OTHER)) {
-					individualColors.add("green");
+					individualColors.add(FuelTypeMetadata.BIOMASS_GRAPH_COLOR);
 				} else if (generatorFuelTypes.get(generatorName).equals(
 						FuelType.GAS)) {
-					individualColors.add("brown");
+					individualColors
+							.add(FuelTypeMetadata.NATURAL_GAS_GRAPH_COLOR);
 				} else if (generatorFuelTypes.get(generatorName).equals(
 						FuelType.HYDRO)) {
-					individualColors.add("blue");
+					individualColors
+							.add(FuelTypeMetadata.HYDROELECTRIC_GRAPH_COLOR);
 				} else if (generatorFuelTypes.get(generatorName).equals(
 						FuelType.WIND)) {
-					individualColors.add("yellow");
+					individualColors.add(FuelTypeMetadata.WIND_GRAPH_COLOR);
 				}
 
 				individualLabels.add(generatorName);
 
-				// TODO Fix up, this is kind of shiesty, trusting that all generators will have all entries
+				// TODO Fix up, this is kind of shiesty, trusting that all
+				// generators will have all entries
 				int i = 0;
-				LinkedHashMap<String, Output> generatorTimeseriesMap = individualGeneratorOutputs.get(generatorName);
-				for (Entry<String, Output> timeseriesEntry : generatorTimeseriesMap.entrySet()) {
+				LinkedHashMap<String, Output> generatorTimeseriesMap = individualGeneratorOutputs
+						.get(generatorName);
+				for (Entry<String, Output> timeseriesEntry : generatorTimeseriesMap
+						.entrySet()) {
 					if (individualData.size() > i) {
 						List<Object> xVals = individualData.get(i);
 						xVals.add(timeseriesEntry.getValue().getEnergyMW());
 						individualData.set(i, xVals);
 					} else {
 						List<Object> xVals = new ArrayList<Object>();
-						xVals.add(genOutTimestampFormat.parse(timeseriesEntry.getKey()));
+						xVals.add(genOutTimestampFormat.parse(timeseriesEntry
+								.getKey()));
 						xVals.add(timeseriesEntry.getValue().getEnergyMW());
 						individualData.add(xVals);
 					}
@@ -176,18 +190,12 @@ public class EmissionsController {
 				try {
 					List<Object> xVals = new ArrayList<Object>();
 					xVals.add(genOutTimestampFormat.parseObject(timeString));
-					xVals.add(fuelTypeMap.get(FuelType.valueOf("COAL")).get(
-							timeString) * 1.001);
-					xVals.add(fuelTypeMap.get(FuelType.valueOf("GAS")).get(
-							timeString) * 0.469);
-					xVals.add(fuelTypeMap.get(FuelType.valueOf("WIND")).get(
-							timeString) * 0.012);
-					xVals.add(fuelTypeMap.get(FuelType.valueOf("HYDRO")).get(
-							timeString) * 0.004);
-					xVals.add(fuelTypeMap.get(FuelType.valueOf("OTHER")).get(
-							timeString) * 0.018);
-					xVals.add(fuelTypeMap.get(FuelType.valueOf("NUCLEAR")).get(
-							timeString) * 0.016);
+					xVals.add(fuelTypeMap.get(FuelType.COAL).get(timeString) * 1.001);
+					xVals.add(fuelTypeMap.get(FuelType.GAS).get(timeString) * 0.469);
+					xVals.add(fuelTypeMap.get(FuelType.WIND).get(timeString) * 0.012);
+					xVals.add(fuelTypeMap.get(FuelType.HYDRO).get(timeString) * 0.004);
+					xVals.add(fuelTypeMap.get(FuelType.OTHER).get(timeString) * 0.018);
+					xVals.add(fuelTypeMap.get(FuelType.NUCLEAR).get(timeString) * 0.016);
 					aggregateData.add(xVals);
 				} catch (ParseException e) {
 					// TODO Auto-generated catch block

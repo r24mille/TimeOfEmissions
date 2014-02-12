@@ -16,6 +16,7 @@ import java.util.Set;
 import name.reidmiller.iesoreports.IesoPublicReportBindingsConfig;
 import name.reidmiller.iesoreports.client.GeneratorOutputCapabilityClient;
 import name.reidmiller.iesoreports.client.GeneratorOutputCapabilityClient.FuelType;
+import name.reidmiller.timeofemissions.model.FuelTypeMetadata;
 import name.reidmiller.timeofemissions.web.command.GeneratorOutputCommand;
 
 import org.apache.logging.log4j.LogManager;
@@ -58,7 +59,13 @@ public class GeneratorOutputController {
 			// Set up labels, colors, and data for aggregate output by fuel type
 			// graph
 			String[] aggregateLabels = new String[] { "Date", "Coal", "Gas", "Wind", "Hydro", "Other", "Nuclear" };
-			String[] aggregateColors = new String[] { "#000000", "#A52A2A", "#79D24C", "#204C79", "#999966", "#F9A848" };
+			String[] aggregateColors = new String[] {
+					FuelTypeMetadata.COAL_GRAPH_COLOR,
+					FuelTypeMetadata.NATURAL_GAS_GRAPH_COLOR,
+					FuelTypeMetadata.WIND_GRAPH_COLOR,
+					FuelTypeMetadata.HYDROELECTRIC_GRAPH_COLOR,
+					FuelTypeMetadata.BIOMASS_GRAPH_COLOR,
+					FuelTypeMetadata.NUCLEAR_GRAPH_COLOR };
 			List<List<Object>> aggregateData = new ArrayList<List<Object>>();
 
 			// Get IMODocBodies for date range or for current day
@@ -133,22 +140,24 @@ public class GeneratorOutputController {
 			for (String generatorName : generatorSet) {
 				if (generatorFuelTypes.get(generatorName).equals(
 						FuelType.NUCLEAR)) {
-					individualColors.add("orange");
+					individualColors.add(FuelTypeMetadata.NUCLEAR_GRAPH_COLOR);
 				} else if (generatorFuelTypes.get(generatorName).equals(
 						FuelType.COAL)) {
-					individualColors.add("black");
+					individualColors.add(FuelTypeMetadata.COAL_GRAPH_COLOR);
 				} else if (generatorFuelTypes.get(generatorName).equals(
 						FuelType.OTHER)) {
-					individualColors.add("green");
+					individualColors.add(FuelTypeMetadata.BIOMASS_GRAPH_COLOR);
 				} else if (generatorFuelTypes.get(generatorName).equals(
 						FuelType.GAS)) {
-					individualColors.add("brown");
+					individualColors
+							.add(FuelTypeMetadata.NATURAL_GAS_GRAPH_COLOR);
 				} else if (generatorFuelTypes.get(generatorName).equals(
 						FuelType.HYDRO)) {
-					individualColors.add("blue");
+					individualColors
+							.add(FuelTypeMetadata.HYDROELECTRIC_GRAPH_COLOR);
 				} else if (generatorFuelTypes.get(generatorName).equals(
 						FuelType.WIND)) {
-					individualColors.add("yellow");
+					individualColors.add(FuelTypeMetadata.WIND_GRAPH_COLOR);
 				}
 
 				individualLabels.add(generatorName);
