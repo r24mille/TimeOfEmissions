@@ -178,10 +178,10 @@
 						individualDataJSON,
 						{
 							title : "Individual Generator Output",
-							titleHeight : 75,
+							titleHeight : 65,
 							xlabel : "Date",
 							ylabel : "Megawatts (MW)",
-							drawPoints : true,
+							drawPoints : false,
 							fillGraph: false,
 							fillAlpha: 0.25,
 							strokeWidth: 1.5,
@@ -240,8 +240,6 @@
 						$("div#ind_gen_chart div.dygraph-title").parent().append("<div class=\"top_legend\"></div>");
 						$("div#ind_gen_chart div.top_legend")
 							.append("<ul class=\"top_legend_row\"><li class=\"period_offpeak\">Off-peak Hours</li><li class=\"period_midpeak\">Mid-peak Hours</li><li class=\"period_onpeak\">On-peak Hours</li></ul>");
-						$("div#ind_gen_chart div.top_legend")
-							.append("<ul class=\"top_legend_row\"><li class=\"plot_line\">Power Generated</li></ul>");
 
 					</script>
 				</section>
