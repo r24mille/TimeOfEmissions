@@ -1,6 +1,0 @@
-[submodule "src/submodules/iesoreports"]
-	path = src/submodules/iesoreports
-	url = https://github.com/r24mille/IesoPublicReportBindings.git
-[submodule "submodules/IesoPublicReportBindings"]
-	path = submodules/IesoPublicReportBindings
-	url = https://github.com/r24mille/IesoPublicReportBindings.git
