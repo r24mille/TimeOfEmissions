@@ -24,7 +24,7 @@
 
 	<div class="header-container">
 		<header class="wrapper clearfix">
-			<h1 class="title">Time of Emissions</h1>
+			<h1 class="title"><a href="./">Time of Emissions</a></h1>
 			<nav>
 				<ul>
 					<li><a href="./sbg">Surplus Baseload Generation</a></li>

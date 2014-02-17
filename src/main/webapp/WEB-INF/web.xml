@@ -5,7 +5,7 @@
 	<description>Application which pulls current electricity generation data from independent system operators to present regional emissions information.</description>
 
 	<welcome-file-list>
-		<welcome-file></welcome-file>
+		<welcome-file>index.jsp</welcome-file>
 	</welcome-file-list>
 
 	<servlet>
