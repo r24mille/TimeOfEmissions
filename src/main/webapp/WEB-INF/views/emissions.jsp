@@ -10,7 +10,7 @@
 <meta name="description" content="">
 <meta name="viewport" content="width=device-width">
 
-<link rel="stylesheet" href="resources/css/normalize.min.css">
+<link rel="stylesheet" href="resources/css/normalize.css">
 <link rel="stylesheet" href="resources/css/main.css">
 <link rel="stylesheet"
 	href="resources/css/ui-lightness/jquery-ui-1.10.4.custom.css">
