@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<groupId>name.reidmiller</groupId>
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>TimeOfEmissions</artifactId>
+	<artifactId>time-of-emissions</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>war</packaging>
 
@@ -46,7 +46,6 @@
 					</webResources>
 					<warName>${project.artifactId}</warName>
 				</configuration>
-
 			</plugin>
 		</plugins>
 	</build>
@@ -55,6 +54,30 @@
 		<repository>
 			<id>IesoPublicReportBindings-mvn-repo</id>
 			<url>https://raw.github.com/r24mille/IesoPublicReportBindings/mvn-repo/</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>SppPublicReportClient-mvn-repo</id>
+			<url>https://raw.github.com/r24mille/SppPublicReportClient/mvn-repo/</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>AesoPublicReportClient-mvn-repo</id>
+			<url>https://raw.github.com/r24mille/AesoPublicReportClient/mvn-repo/</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>MisoPublicReportBindings-mvn-repo</id>
+			<url>https://raw.github.com/r24mille/MisoPublicReportBindings/mvn-repo/</url>
 			<snapshots>
 				<enabled>true</enabled>
 				<updatePolicy>always</updatePolicy>
@@ -116,6 +139,21 @@
 			<groupId>name.reidmiller</groupId>
 			<artifactId>ieso-public-report-bindings</artifactId>
 			<version>0.0.6-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>name.reidmiller</groupId>
+			<artifactId>spp-public-report-client</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>name.reidmiller</groupId>
+			<artifactId>aeso-public-report-client</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>name.reidmiller</groupId>
+			<artifactId>miso-public-report-bindings</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
