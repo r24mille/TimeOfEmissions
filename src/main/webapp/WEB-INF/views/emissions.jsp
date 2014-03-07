@@ -1,54 +1,27 @@
 <%@ page contentType="text/html; charset=UTF-8"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
+<%@ taglib prefix="toe" tagdir="/WEB-INF/tags/toe"%>
 <!DOCTYPE html>
 <html class="no-js">
-<head>
-<meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-<title></title>
-<meta name="description" content="">
-<meta name="viewport" content="width=device-width">
-
-<link rel="stylesheet" href="resources/css/normalize.css">
-<link rel="stylesheet" href="resources/css/main.css">
-<link rel="stylesheet"
-	href="resources/css/ui-lightness/jquery-ui-1.10.4.custom.css">
-<script src="resources/js/jquery-1.10.1.min.js"></script>
-<script src="resources/js/main.js"></script>
-<script src="resources/js/jquery-dateFormat.js"></script>
-<script src="resources/js/jquery-ui-1.10.4.custom.js"></script>
-<script src="resources/js/dygraph-combined.js"></script>
-</head>
+<toe:head pageTitle="Emissions"
+	description="Electricity generation emissions by fuel type" />
 <body>
+	<toe:pageHeader />
+	<toe:pageContent>
 
-	<div class="header-container">
-		<header class="wrapper clearfix">
-			<h1 class="title"><a href="./">Time of Emissions</a></h1>
-			<nav>
-				<ul>
-					<li><a href="./sbg">Surplus Baseload Generation</a></li>
-					<li><a href="./generator_output">Ontario Generation Mix</a></li>
-					<li><a href="./emissions">Emissions</a></li>
-				</ul>
-			</nav>
-		</header>
-	</div>
-
-	<div class="main-container">
 		<div class="main wrapper clearfix">
 			<article>
 				<header>
 					<h1>Carbon Dioxide Emissions</h1>
 				</header>
 				<section>
-					<h2>
-						Emissions by fuel type starting ${reportDate}
-					</h2>
+					<h2>Emissions by fuel type starting ${reportDate}</h2>
 					<p>
-					<form:form method="POST">
-							<form:label path="startDateString">Start Date</form:label><form:input path="startDateString" id="startDateString"/>
-							 <script>
+						<form:form method="POST">
+							<form:label path="startDateString">Start Date</form:label>
+							<form:input path="startDateString" id="startDateString" />
+							<script>
 								$(function() {
 									$( "#startDateString" ).datepicker({
 									changeMonth: true,
@@ -56,8 +29,9 @@
 									});
 								});
 							</script>
-							<form:label path="endDateString">End Date</form:label><form:input path="endDateString" id="endDateString"/>
-							 <script>
+							<form:label path="endDateString">End Date</form:label>
+							<form:input path="endDateString" id="endDateString" />
+							<script>
 								$(function() {
 									$( "#endDateString" ).datepicker({
 									changeMonth: true,
@@ -65,7 +39,7 @@
 									});
 								});
 							</script>
-							<input type="submit" value="Update"/>
+							<input type="submit" value="Update" />
 						</form:form>
 					</p>
 					<div id="agg_gen_chart" style="width: 100%; height: 500px;"></div>
@@ -160,13 +134,7 @@
 
 		</div>
 		<!-- #main -->
-	</div>
-	<!-- #main-container -->
-
-	<div class="footer-container">
-		<footer class="wrapper">
-			<h3>Work in Progress</h3>
-		</footer>
-	</div>
+	</toe:pageContent>
+	<toe:pageFooter />
 </body>
 </html>
