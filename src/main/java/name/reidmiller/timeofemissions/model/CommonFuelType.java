@@ -8,9 +8,10 @@ import org.apache.logging.log4j.Logger;
 import org.misoenergy.ria.binding.FuelCategory;
 
 public enum CommonFuelType {
-	BIOMASS(18, "#999966"), COAL(1001, "#000000"), GEOTHERMAL(45), HYDROELECTRIC(
-			4, "#204C79"), NATURAL_GAS(469, "#A52A2A"), NUCLEAR(16, "#F9A848"), OTHER(
-			0), SOLAR_PV(46), SOLAR_THERMAL(22), WIND(12, "#79D24C");
+	BIOMASS(18, "#999966"), COAL(1001, "#000000"), DISPATCHABLE_LOAD(0), GEOTHERMAL(
+			45), HYDROELECTRIC(4, "#204C79"), NATURAL_GAS(469, "#A52A2A"), NUCLEAR(
+			16, "#F9A848"), OTHER(0), SOLAR_PV(46), SOLAR_THERMAL(22), WIND(12,
+			"#79D24C");
 
 	private static Logger logger = LogManager.getLogger(CommonFuelType.class);
 	private double gramsCarbonDioxidePerKWHe;
