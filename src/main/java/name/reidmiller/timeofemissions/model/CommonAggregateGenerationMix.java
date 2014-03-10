@@ -70,9 +70,9 @@ public class CommonAggregateGenerationMix {
 				// date from ordering of docBodies
 				DateTime deliveryDateTime;
 				if (docBodyIndex == 0) {
-					deliveryDateTime = today.plusDays(1); // tomorrow
-				} else {
 					deliveryDateTime = DateTime.now().withTimeAtStartOfDay();
+				} else {
+					deliveryDateTime = today.plusDays(1); // tomorrow
 				}
 
 				// Because XML client is returning null systemName, assume
