@@ -10,10 +10,17 @@ import java.util.List;
 
 import name.reidmiller.iesoreports.IesoPublicReportBindingsConfig;
 import name.reidmiller.iesoreports.client.SurplusBaseloadGenerationClient;
+import name.reidmiller.timeofemissions.model.CommonAggregateGenerationMix;
+import name.reidmiller.timeofemissions.model.Iso;
+import name.reidmiller.timeofemissions.model.SbgImpactDayAheadForecast;
+import name.reidmiller.timeofemissions.web.command.GeneratorOutputCommand;
 import name.reidmiller.timeofemissions.web.command.SurplusBaseloadGenerationCommand;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -33,8 +40,21 @@ public class SurplusBaseloadGenerationController {
 			"yyyy-MM-dd H:mm:ss");
 	Logger logger = LogManager.getLogger(this.getClass());
 	Gson gson = new Gson();
-
+	
 	@RequestMapping("/sbg")
+	public String generatorOutput(
+			@ModelAttribute GeneratorOutputCommand command, Model model) {
+		DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd H:mm:ss");
+		DateTime forecastedDateTime = formatter.parseDateTime("2014-03-13 0:00:00");
+		SbgImpactDayAheadForecast sbgImpactDayAheadForecast = new SbgImpactDayAheadForecast(Iso.IESO, forecastedDateTime);
+		
+		model.addAttribute("generation", gson.toJson(sbgImpactDayAheadForecast.getCommonAggregateGenerationForecast()));
+		model.addAttribute("oversupply", gson.toJson(sbgImpactDayAheadForecast.getCommonOversupplyForecast()));
+		model.addAttribute("command", command);
+		return "sbg";
+	}
+
+	@RequestMapping("/sbg_old")
 	public String sbg(
 			@ModelAttribute SurplusBaseloadGenerationCommand command,
 			Model model) {

@@ -149,7 +149,7 @@ public class CommonAggregateGenerationMix {
 															hourlyValue
 																	.getDeliveryHour() - 1)
 													.toDate(),
-											GenerationValueType.FORECAST,
+											DataPointType.FORECAST,
 											megawatts);
 
 									commonAggregateGenerationForecast.get(
@@ -212,7 +212,7 @@ public class CommonAggregateGenerationMix {
 					CommonAggregateGeneration commonAggregateGeneration = new CommonAggregateGeneration(
 							commonFuelType, genOutTimestampFormatter
 									.parseDateTime(timestamp + " -0500")
-									.toDate(), GenerationValueType.OBSERVED,
+									.toDate(), DataPointType.OBSERVED,
 							entryMegawatts);
 					commonAggregateGenerationObservations.get(commonFuelType)
 							.add(commonAggregateGeneration);

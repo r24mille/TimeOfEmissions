@@ -7,15 +7,15 @@ import org.joda.time.DateTime;
 public class CommonAggregateGeneration {
 	private CommonFuelType commonFuelType;
 	private Date date;
-	private GenerationValueType generationValueType;
+	private DataPointType dataPointType;
 	private double megawatts;
 
 	public CommonAggregateGeneration(CommonFuelType commonFuelType,
-			Date date, GenerationValueType generationValueType,
+			Date date, DataPointType dataPointType,
 			double megawatts) {
 		this.commonFuelType = commonFuelType;
 		this.date = date;
-		this.generationValueType = generationValueType;
+		this.dataPointType = dataPointType;
 		this.megawatts = megawatts;
 	}
 
@@ -35,12 +35,12 @@ public class CommonAggregateGeneration {
 		this.date = date;
 	}
 
-	public GenerationValueType getGenerationValueType() {
-		return generationValueType;
+	public DataPointType getGenerationValueType() {
+		return dataPointType;
 	}
 
-	public void setGenerationValueType(GenerationValueType generationValueType) {
-		this.generationValueType = generationValueType;
+	public void setGenerationValueType(DataPointType dataPointType) {
+		this.dataPointType = dataPointType;
 	}
 
 	public double getMegawatts() {
