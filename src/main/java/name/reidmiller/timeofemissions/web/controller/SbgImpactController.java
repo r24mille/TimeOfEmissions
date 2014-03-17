@@ -1,8 +1,7 @@
-package name.reidmiller.timeofemissions.model;
+package name.reidmiller.timeofemissions.web.controller;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,12 +9,26 @@ import java.util.List;
 import name.reidmiller.iesoreports.IesoPublicReportBindingsConfig;
 import name.reidmiller.iesoreports.client.DayAheadAdequacyClient;
 import name.reidmiller.iesoreports.client.SurplusBaseloadGenerationClient;
+import name.reidmiller.timeofemissions.model.CommonAggregateGeneration;
+import name.reidmiller.timeofemissions.model.CommonAggregateGenerationMix;
+import name.reidmiller.timeofemissions.model.CommonFuelType;
+import name.reidmiller.timeofemissions.model.CommonOversupply;
+import name.reidmiller.timeofemissions.model.DataPointType;
+import name.reidmiller.timeofemissions.model.Iso;
+import name.reidmiller.timeofemissions.web.command.GeneratorOutputCommand;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import ca.ieso.reports.schema.daadequacy.DocBody.System.InternalResources;
 import ca.ieso.reports.schema.daadequacy.DocBody.System.InternalResources.InternalResource;
@@ -24,27 +37,41 @@ import ca.ieso.reports.schema.daadequacy.HourlyValue;
 import ca.ieso.reports.schema.sbg.Document.DocBody.DailyForecast;
 import ca.ieso.reports.schema.sbg.Document.DocBody.DailyForecast.HourlyForecast;
 
-public class SbgImpactDayAheadForecast {
+@Controller
+public class SbgImpactController {
 	private Logger logger = LogManager.getLogger(this.getClass());
 	DateTimeFormatter sbgTimestampFormatter = DateTimeFormat
 			.forPattern("yyyy-MM-dd H:mm:ss");
-	private DateTime forecastedDateTime;
-	private HashMap<CommonFuelType, List<CommonAggregateGeneration>> commonAggregateGenerationForecast;
-	private List<CommonOversupply> commonOversupplyForecast;
+	
+	@RequestMapping("/toe_impact/html")
+	public String generatorOutput(Model model) {
+		return "toe_impact";
+	}
 
-	public SbgImpactDayAheadForecast(Iso iso, DateTime forecastedDateTime) {
-		this.forecastedDateTime = forecastedDateTime;
+	@RequestMapping(value = "/toe_impact/iso/{isoString}/date/{datePart}/json", method = RequestMethod.GET)
+	public @ResponseBody
+	HashMap<String, Object> generatorsJson(@PathVariable String isoString, @PathVariable String datePart) {
+		Iso iso = Iso.valueOf(isoString.toUpperCase());
+		DateTime jsonDateTime = sbgTimestampFormatter.parseDateTime(datePart + " 0:00:00");
+		HashMap<String, Object> json = new HashMap<String, Object>();
 
 		switch (iso) {
 		case IESO:
-			this.commonAggregateGenerationForecast = this
-					.populateIesoAggregateDayAheadForecastMix(this.forecastedDateTime);
-			this.commonOversupplyForecast = this
-					.populateIesoSbgForecast(this.forecastedDateTime);
+			json.put(
+					"generation",
+					this.getIesoAggregateDayAheadForecastMix(jsonDateTime));
+			json.put("oversupply",
+					this.getIesoSbgForecast(jsonDateTime));
+			break;
+		default:
+			json.put("null", null);
+			break;
 		}
+
+		return json;
 	}
 
-	private List<CommonOversupply> populateIesoSbgForecast(
+	private List<CommonOversupply> getIesoSbgForecast(
 			DateTime forecastedDateTime) {
 		List<CommonOversupply> commonOversupplyForecast = new ArrayList<CommonOversupply>();
 		SurplusBaseloadGenerationClient sbgClient = IesoPublicReportBindingsConfig
@@ -87,7 +114,7 @@ public class SbgImpactDayAheadForecast {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return commonOversupplyForecast;
 	}
 
@@ -97,7 +124,7 @@ public class SbgImpactDayAheadForecast {
 	 * not been reached, the prior day's day-ahead forecast is used as forecast
 	 * values.
 	 */
-	public HashMap<CommonFuelType, List<CommonAggregateGeneration>> populateIesoAggregateDayAheadForecastMix(
+	public HashMap<CommonFuelType, List<CommonAggregateGeneration>> getIesoAggregateDayAheadForecastMix(
 			DateTime forecastedDateTime) {
 		HashMap<CommonFuelType, List<CommonAggregateGeneration>> commonAggregateGenerationForecast = new HashMap<CommonFuelType, List<CommonAggregateGeneration>>();
 		DayAheadAdequacyClient dayAheadAdequacyClient = IesoPublicReportBindingsConfig
@@ -205,31 +232,5 @@ public class SbgImpactDayAheadForecast {
 		}
 
 		return commonAggregateGenerationForecast;
-	}
-
-	public DateTime getForecastedDateTime() {
-		return forecastedDateTime;
-	}
-
-	public void setForecastedDateTime(DateTime forecastedDateTime) {
-		this.forecastedDateTime = forecastedDateTime;
-	}
-
-	public HashMap<CommonFuelType, List<CommonAggregateGeneration>> getCommonAggregateGenerationForecast() {
-		return commonAggregateGenerationForecast;
-	}
-
-	public void setCommonAggregateGenerationForecast(
-			HashMap<CommonFuelType, List<CommonAggregateGeneration>> commonAggregateGenerationForecast) {
-		this.commonAggregateGenerationForecast = commonAggregateGenerationForecast;
-	}
-
-	public List<CommonOversupply> getCommonOversupplyForecast() {
-		return commonOversupplyForecast;
-	}
-
-	public void setCommonOversupplyForecast(
-			List<CommonOversupply> commonOversupplyForecast) {
-		this.commonOversupplyForecast = commonOversupplyForecast;
 	}
 }
