@@ -30,7 +30,7 @@ body {
 	font: 10px sans-serif;
 }
 
-.axis path,.axis line {
+.axis path, .axis line {
 	fill: none;
 	stroke: #000;
 	shape-rendering: crispEdges;
@@ -38,6 +38,11 @@ body {
 
 .area {
 	fill: steelblue;
+}
+
+.threshold {
+	fill: orange;
+	stroke: orange;
 }
 </style>
 </head>
