@@ -7,11 +7,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.misoenergy.ria.binding.FuelCategory;
 
+/**
+ * Note that {@link #compareTo(CommonFuelType)} is final and uses the natural
+ * ordering of Enum which sorts according to the order which constants are
+ * declared. Currently the fuel types are being ordered according to carbon
+ * dioxide emissions and dispatchability.
+ */
 public enum CommonFuelType {
-	BIOMASS(18, "#999966"), COAL(1001, "#000000"), DISPATCHABLE_LOAD(0), GEOTHERMAL(
-			45), HYDROELECTRIC(4, "#204C79"), NATURAL_GAS(469, "#A52A2A"), NUCLEAR(
-			16, "#F9A848"), OTHER(0), SOLAR_PV(46), SOLAR_THERMAL(22), WIND(12,
-			"#79D24C");
+	OTHER(0), NUCLEAR(16, "#F9A848"), WIND(12, "#79D24C"), SOLAR_PV(46), SOLAR_THERMAL(
+			22), GEOTHERMAL(45), HYDROELECTRIC(4, "#204C79"), BIOMASS(18,
+			"#999966"), NATURAL_GAS(469, "#A52A2A"), COAL(1001, "#000000"), DISPATCHABLE_LOAD(
+			0);
 
 	private static Logger logger = LogManager.getLogger(CommonFuelType.class);
 	private double gramsCarbonDioxidePerKWHe;

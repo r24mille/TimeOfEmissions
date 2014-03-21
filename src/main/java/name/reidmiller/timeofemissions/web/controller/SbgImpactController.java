@@ -5,6 +5,7 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 
 import name.reidmiller.iesoreports.IesoPublicReportBindingsConfig;
 import name.reidmiller.iesoreports.client.DayAheadAdequacyClient;
@@ -124,9 +125,9 @@ public class SbgImpactController {
 	 * not been reached, the prior day's day-ahead forecast is used as forecast
 	 * values.
 	 */
-	public HashMap<CommonFuelType, List<CommonAggregateGeneration>> getIesoAggregateDayAheadForecastMix(
+	public TreeMap<CommonFuelType, List<CommonAggregateGeneration>> getIesoAggregateDayAheadForecastMix(
 			DateTime forecastedDateTime) {
-		HashMap<CommonFuelType, List<CommonAggregateGeneration>> commonAggregateGenerationForecast = new HashMap<CommonFuelType, List<CommonAggregateGeneration>>();
+		TreeMap<CommonFuelType, List<CommonAggregateGeneration>> commonAggregateGenerationForecast = new TreeMap<CommonFuelType, List<CommonAggregateGeneration>>();
 		DayAheadAdequacyClient dayAheadAdequacyClient = IesoPublicReportBindingsConfig
 				.dayAheadAdequacyClient();
 		try {
