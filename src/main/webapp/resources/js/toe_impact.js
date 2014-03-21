@@ -14,20 +14,6 @@ var _yAxis = d3.svg.axis().scale(_y).orient("left");
 
 var _color = d3.scale.category10();
 
-// SBG area
-var _area = d3.svg.area().x(function(d) {
-	return _x(d.date);
-}).y0(_height).y1(function(d) {
-	return _y(d.megawatts);
-});
-
-// Export threshold line
-var _line = d3.svg.line().x(function(d) {
-	return _x(d.date);
-}).y(function(d) {
-	return _y(d.exportThreshold);
-}).interpolate("basis");
-
 // Generator stack
 var _stackArea = d3.svg.area().x(function(d) {
 	return _x(d.date);
@@ -70,7 +56,7 @@ function chartImpact(contextPath, iso, date) {
 							values : data.oversupply.map(function(d) {
 								return {
 									date : d.date,
-									y : d.megawatts
+									y : d.excess
 								};
 							})
 						};
@@ -117,12 +103,6 @@ function chartImpact(contextPath, iso, date) {
 								"fill", function(d) {
 									return _color(d.name);
 								});
-				// _svg.append("path").datum(data.oversupply)
-				// .attr("class", "area").attr("d", _area);
-
-				// Export threshold line
-				// _svg.append("path").datum(data.oversupply).attr("class",
-				// "threshold").attr("d", _line);
 
 				_svg.append("g").attr("class", "x axis").attr("transform",
 						"translate(0," + _height + ")").call(_xAxis);
