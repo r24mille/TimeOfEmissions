@@ -39,7 +39,7 @@ function chartImpact(contextPath, iso, date) {
 				var usedFuelNames = d3.entries(data.generation).map(
 						function(e) {
 							if (e.value.some(function(v) {
-								return v.megawatts;
+								return v.scheduledMW;
 							}) > 0) {
 								return e.key;
 							}
@@ -57,7 +57,7 @@ function chartImpact(contextPath, iso, date) {
 							values : data.generation[name].map(function(d) {
 								return {
 									date : d.date,
-									y : d.megawatts
+									y : d.scheduledMW
 								};
 							})
 						};
@@ -80,7 +80,7 @@ function chartImpact(contextPath, iso, date) {
 
 				_y.domain([ 0, d3.sum(d3.keys(data.generation), function(d) {
 					return d3.max(data.generation[d].map(function(e) {
-						return e.megawatts;
+						return e.scheduledMW;
 					}));
 				}) ]);
 

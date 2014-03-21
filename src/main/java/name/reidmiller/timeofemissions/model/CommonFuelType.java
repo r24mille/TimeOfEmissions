@@ -12,12 +12,16 @@ import org.misoenergy.ria.binding.FuelCategory;
  * ordering of Enum which sorts according to the order which constants are
  * declared. Currently the fuel types are being ordered according to carbon
  * dioxide emissions and dispatchability.
+ * 
+ * TODO For now, since this is primarily for IESO, OTHER was given the
+ * carbon-dioxide emissions and HTML color of biomass since that's primarily what Ontario's
+ * "Other" generators are.
  */
 public enum CommonFuelType {
-	OTHER(0), NUCLEAR(16, "#F9A848"), WIND(12, "#79D24C"), SOLAR_PV(46), SOLAR_THERMAL(
-			22), GEOTHERMAL(45), HYDROELECTRIC(4, "#204C79"), BIOMASS(18,
-			"#999966"), NATURAL_GAS(469, "#A52A2A"), COAL(1001, "#000000"), DISPATCHABLE_LOAD(
-			0);
+	NUCLEAR(16, "#F9A848"), WIND(12, "#79D24C"), SOLAR_PV(46), SOLAR_THERMAL(
+			22), GEOTHERMAL(45), HYDROELECTRIC(4, "#204C79"), DISPATCHABLE_LOAD(
+			0), OTHER(18, "#999966"), BIOMASS(18, "#999966"), NATURAL_GAS(469, "#A52A2A"), COAL(1001,
+			"#000000");
 
 	private static Logger logger = LogManager.getLogger(CommonFuelType.class);
 	private double gramsCarbonDioxidePerKWHe;

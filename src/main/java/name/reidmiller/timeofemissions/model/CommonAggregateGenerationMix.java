@@ -23,6 +23,7 @@ import ca.ieso.reports.schema.adequacy.DocBody;
 import ca.ieso.reports.schema.adequacy.DocBody.System;
 import ca.ieso.reports.schema.adequacy.DocBody.System.InternalResources;
 import ca.ieso.reports.schema.adequacy.DocBody.System.InternalResources.InternalResource;
+import ca.ieso.reports.schema.adequacy.DocBody.System.InternalResources.InternalResource.FuelOffered;
 import ca.ieso.reports.schema.adequacy.DocBody.System.InternalResources.InternalResource.FuelScheduled;
 import ca.ieso.reports.schema.adequacy.HourlyValue;
 import ca.ieso.reports.schema.genoutputcapability.IMODocBody;
@@ -132,25 +133,42 @@ public class CommonAggregateGenerationMix {
 
 							FuelScheduled fuelScheduled = internalResource
 									.getFuelScheduled();
-							if (fuelScheduled != null) {
-								List<HourlyValue> hourlyValues = fuelScheduled
+							FuelOffered fueldOffered = internalResource
+									.getFuelOffered();
+							if (fuelScheduled != null && fueldOffered != null) {
+								List<HourlyValue> scheduledHourlyValues = fuelScheduled
 										.getScheduled();
-								for (HourlyValue hourlyValue : hourlyValues) {
-									double megawatts = 0;
-									if (hourlyValue.getEnergyMW() != null) {
-										megawatts = hourlyValue.getEnergyMW()
-												.doubleValue();
+								List<HourlyValue> offeredHourlyValues = fueldOffered
+										.getOffered();
+
+								for (int h = 0; h < scheduledHourlyValues
+										.size()
+										&& h < offeredHourlyValues.size(); h++) {
+									HourlyValue scheduledHourlyValue = scheduledHourlyValues
+											.get(h);
+									double scheduledMW = 0;
+									if (scheduledHourlyValue.getEnergyMW() != null) {
+										scheduledMW = scheduledHourlyValue
+												.getEnergyMW().doubleValue();
+									}
+
+									HourlyValue offeredHourlyValue = offeredHourlyValues
+											.get(h);
+									double offeredMW = 0;
+									if (offeredHourlyValue.getEnergyMW() != null) {
+										offeredMW = offeredHourlyValue
+												.getEnergyMW().doubleValue();
 									}
 
 									CommonAggregateGeneration commonAggregateGeneration = new CommonAggregateGeneration(
 											commonFuelType,
 											deliveryDateTime
 													.plusHours(
-															hourlyValue
+															scheduledHourlyValue
 																	.getDeliveryHour() - 1)
 													.toDate(),
 											DataPointType.FORECAST,
-											megawatts);
+											scheduledMW, offeredMW);
 
 									commonAggregateGenerationForecast.get(
 											commonFuelType).add(
@@ -213,7 +231,7 @@ public class CommonAggregateGenerationMix {
 							commonFuelType, genOutTimestampFormatter
 									.parseDateTime(timestamp + " -0500")
 									.toDate(), DataPointType.OBSERVED,
-							entryMegawatts);
+							entryMegawatts, 0);
 					commonAggregateGenerationObservations.get(commonFuelType)
 							.add(commonAggregateGeneration);
 				}

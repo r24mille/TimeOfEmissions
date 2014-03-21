@@ -5,18 +5,20 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import name.reidmiller.iesoreports.IesoPublicReportBindingsConfig;
 import name.reidmiller.iesoreports.client.DayAheadAdequacyClient;
 import name.reidmiller.iesoreports.client.SurplusBaseloadGenerationClient;
 import name.reidmiller.timeofemissions.model.CommonAggregateGeneration;
-import name.reidmiller.timeofemissions.model.CommonAggregateGenerationMix;
 import name.reidmiller.timeofemissions.model.CommonFuelType;
 import name.reidmiller.timeofemissions.model.CommonOversupply;
 import name.reidmiller.timeofemissions.model.DataPointType;
+import name.reidmiller.timeofemissions.model.DemandShift;
 import name.reidmiller.timeofemissions.model.Iso;
-import name.reidmiller.timeofemissions.web.command.GeneratorOutputCommand;
+import name.reidmiller.timeofemissions.model.TimeOfEmissionsGenerationComparator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,7 +27,6 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import ca.ieso.reports.schema.daadequacy.DocBody.System.InternalResources;
 import ca.ieso.reports.schema.daadequacy.DocBody.System.InternalResources.InternalResource;
+import ca.ieso.reports.schema.daadequacy.DocBody.System.InternalResources.InternalResource.FuelOffered;
 import ca.ieso.reports.schema.daadequacy.DocBody.System.InternalResources.InternalResource.FuelScheduled;
 import ca.ieso.reports.schema.daadequacy.HourlyValue;
 import ca.ieso.reports.schema.sbg.Document.DocBody.DailyForecast;
@@ -41,9 +43,11 @@ import ca.ieso.reports.schema.sbg.Document.DocBody.DailyForecast.HourlyForecast;
 @Controller
 public class SbgImpactController {
 	private Logger logger = LogManager.getLogger(this.getClass());
+	private static final String GENERATION_SHIFT = "generationShift";
+	private static final String OVERSUPPLY_SHIFT = "oversupplyShift";
 	DateTimeFormatter sbgTimestampFormatter = DateTimeFormat
 			.forPattern("yyyy-MM-dd H:mm:ss");
-	
+
 	@RequestMapping("/toe_impact/html")
 	public String generatorOutput(Model model) {
 		return "toe_impact";
@@ -51,18 +55,26 @@ public class SbgImpactController {
 
 	@RequestMapping(value = "/toe_impact/iso/{isoString}/date/{datePart}/json", method = RequestMethod.GET)
 	public @ResponseBody
-	HashMap<String, Object> generatorsJson(@PathVariable String isoString, @PathVariable String datePart) {
+	HashMap<String, Object> generatorsJson(@PathVariable String isoString,
+			@PathVariable String datePart) {
 		Iso iso = Iso.valueOf(isoString.toUpperCase());
-		DateTime jsonDateTime = sbgTimestampFormatter.parseDateTime(datePart + " 0:00:00");
+		DateTime jsonDateTime = sbgTimestampFormatter.parseDateTime(datePart
+				+ " 0:00:00");
 		HashMap<String, Object> json = new HashMap<String, Object>();
 
 		switch (iso) {
 		case IESO:
-			json.put(
-					"generation",
-					this.getIesoAggregateDayAheadForecastMix(jsonDateTime));
-			json.put("oversupply",
-					this.getIesoSbgForecast(jsonDateTime));
+			TreeMap<CommonFuelType, List<CommonAggregateGeneration>> generation = this
+					.getIesoAggregateDayAheadForecastMix(jsonDateTime);
+			List<CommonOversupply> oversupply = this
+					.getIesoSbgForecast(jsonDateTime);
+			HashMap<String, Object> supplyShift = this.shiftSupply(generation,
+					oversupply);
+
+			json.put("generation", generation);
+			json.put("oversupply", oversupply);
+			// json.put(GENERATION_SHIFT, supplyShift.get(GENERATION_SHIFT));
+			// json.put(OVERSUPPLY_SHIFT, supplyShift.get(OVERSUPPLY_SHIFT));
 			break;
 		default:
 			json.put("null", null);
@@ -195,24 +207,40 @@ public class SbgImpactController {
 
 						FuelScheduled fuelScheduled = internalResource
 								.getFuelScheduled();
-						if (fuelScheduled != null) {
-							List<HourlyValue> hourlyValues = fuelScheduled
+						FuelOffered fueldOffered = internalResource
+								.getFuelOffered();
+						if (fuelScheduled != null && fueldOffered != null) {
+							List<HourlyValue> scheduledHourlyValues = fuelScheduled
 									.getScheduled();
-							for (HourlyValue hourlyValue : hourlyValues) {
-								double megawatts = 0;
-								if (hourlyValue.getEnergyMW() != null) {
-									megawatts = hourlyValue.getEnergyMW()
-											.doubleValue();
+							List<HourlyValue> offeredHourlyValues = fueldOffered
+									.getOffered();
+
+							for (int h = 0; h < scheduledHourlyValues.size()
+									&& h < offeredHourlyValues.size(); h++) {
+								HourlyValue scheduledHourlyValue = scheduledHourlyValues
+										.get(h);
+								double scheduledMW = 0;
+								if (scheduledHourlyValue.getEnergyMW() != null) {
+									scheduledMW = scheduledHourlyValue
+											.getEnergyMW().doubleValue();
+								}
+
+								HourlyValue offeredHourlyValue = offeredHourlyValues
+										.get(h);
+								double offeredMW = 0;
+								if (offeredHourlyValue.getEnergyMW() != null) {
+									offeredMW = offeredHourlyValue
+											.getEnergyMW().doubleValue();
 								}
 
 								CommonAggregateGeneration commonAggregateGeneration = new CommonAggregateGeneration(
 										commonFuelType,
-										startOfForecastedDateTime
-												.plusHours(
-														hourlyValue
-																.getDeliveryHour() - 1)
+										startOfForecastedDateTime.plusHours(
+												scheduledHourlyValue
+														.getDeliveryHour() - 1)
 												.toDate(),
-										DataPointType.FORECAST, megawatts);
+										DataPointType.FORECAST, scheduledMW,
+										offeredMW);
 
 								commonAggregateGenerationForecast.get(
 										commonFuelType).add(
@@ -233,5 +261,132 @@ public class SbgImpactController {
 		}
 
 		return commonAggregateGenerationForecast;
+	}
+
+	private HashMap<String, Object> shiftSupply(
+			TreeMap<CommonFuelType, List<CommonAggregateGeneration>> generation,
+			List<CommonOversupply> oversupply) {
+		@SuppressWarnings("unchecked")
+		TreeMap<CommonFuelType, List<CommonAggregateGeneration>> generationPlan = (TreeMap<CommonFuelType, List<CommonAggregateGeneration>>) generation
+				.clone();
+		List<CommonOversupply> oversupplyPlan = new ArrayList<CommonOversupply>(
+				oversupply);
+		int maxHourShift = 4;
+
+		logger.debug("Starting oversupply shift");
+		for (int osHour = 0; osHour < oversupplyPlan.size(); osHour++) {
+			int hourShiftStart = 0;
+			if (osHour - maxHourShift > 0) {
+				hourShiftStart = osHour - maxHourShift;
+			}
+			int hourShiftEnd = 23;
+			if (osHour + maxHourShift < 23) {
+				hourShiftEnd = osHour + maxHourShift;
+			}
+			logger.debug("Oversupply Hour = " + osHour
+					+ ", Minimum Shiftable Hour = " + hourShiftStart
+					+ ", Maximum Shiftable Hour = " + hourShiftEnd + ".");
+
+			// For each oversupply hour, check if there is excess above
+			// exportThreshold
+			if (oversupplyPlan.get(osHour).getExcess() > 0) {
+				oversupplyPlan.get(osHour).getExcess();
+				logger.debug(oversupplyPlan.get(osHour).getExcess()
+						+ " MW excess oversupply in hour " + osHour);
+
+				// Add all CommonAggregateGeneration elements in the range,
+				// ranked by Time-of-Emissions preference
+				TreeSet<CommonAggregateGeneration> shiftRanks = new TreeSet<CommonAggregateGeneration>(
+						new TimeOfEmissionsGenerationComparator());
+				shiftRanks.addAll(generationPlan
+						.get(CommonFuelType.NATURAL_GAS).subList(
+								hourShiftStart, hourShiftEnd + 1));
+
+				// Iterate through generators ranked by shiftability
+				int rank = 0;
+				for (CommonAggregateGeneration rankedGeneration : shiftRanks) {
+					// TODO Daylight savings time error here, duplicate indexes
+					// as well
+					int hourShift = new DateTime(rankedGeneration.getDate())
+							.getHourOfDay();
+					logger.debug("fuel="
+							+ rankedGeneration.getCommonFuelType()
+							+ ", rank="
+							+ rank
+							+ ", hour="
+							+ hourShift
+							+ ", rate="
+							+ rankedGeneration.getTimeOfUseRate()
+							+ ", emissions="
+							+ rankedGeneration.getCommonFuelType()
+									.getGramsCarbonDioxideForKWHeValue(
+											rankedGeneration.getScheduledMW())
+							+ ", capacity="
+							+ rankedGeneration.getAvailableCapacityMW());
+
+					// Shift as much consumption from excess as there is excess
+					// scheduled high-emissions, available low-emissions
+					// capacity, and remaining excess
+					double shiftMW = Math.min(Math.min(
+							rankedGeneration.getScheduledMW(), generationPlan
+									.get(CommonFuelType.WIND).get(osHour)
+									.getAvailableCapacityMW()), oversupplyPlan
+							.get(osHour).getExcess());
+					// Sometimes generators will be scheduled for
+
+					generationPlan.get(CommonFuelType.NATURAL_GAS)
+							.get(hourShift).scheduleGenerationMW(0 - shiftMW);
+					logger.debug("After "
+							+ CommonFuelType.NATURAL_GAS
+							+ " generation change scheduledMW="
+							+ generationPlan.get(CommonFuelType.NATURAL_GAS)
+									.get(hourShift).getScheduledMW()
+							+ ", offeredMW="
+							+ generationPlan.get(CommonFuelType.NATURAL_GAS)
+									.get(hourShift).getOfferedMW()
+							+ ", availableCapacityMW="
+							+ generationPlan.get(CommonFuelType.NATURAL_GAS)
+									.get(hourShift).getAvailableCapacityMW());
+
+					generationPlan.get(CommonFuelType.WIND).get(osHour)
+							.scheduleGenerationMW(shiftMW);
+					logger.debug("After "
+							+ CommonFuelType.WIND
+							+ " generation change scheduledMW="
+							+ generationPlan.get(CommonFuelType.WIND)
+									.get(osHour).getScheduledMW()
+							+ ", offeredMW="
+							+ generationPlan.get(CommonFuelType.WIND)
+									.get(osHour).getOfferedMW()
+							+ ", availableCapacityMW="
+							+ generationPlan.get(CommonFuelType.WIND)
+									.get(osHour).getAvailableCapacityMW());
+					
+					// TODO Add shiftMW to DISPATCHABLE_LOAD's offerMW for shiftHour
+
+					logger.debug("excessMW="
+							+ oversupplyPlan.get(osHour).getExcess()
+							+ " lowered by shiftMW=" + shiftMW);
+					oversupplyPlan.get(osHour).setExcess(
+							oversupplyPlan.get(osHour).getExcess() - shiftMW);
+					
+					// TODO Add shiftMW to DISPATCHABLE_LOAD's scheduleMW for osHour
+					// TODO Remove shiftMW from DISPATCHABLE_LOAD's offerMW for osHour
+					
+					// Step rank if there is still excess, break if no excess
+					// left
+					if (oversupplyPlan.get(osHour).getExcess() <= 0) {
+						break;
+					} else {
+						rank++;
+					}
+				}
+			}
+		}
+
+		HashMap<String, Object> supplyShift = new HashMap<String, Object>(2);
+		supplyShift.put(GENERATION_SHIFT, generationPlan);
+		supplyShift.put(OVERSUPPLY_SHIFT, oversupplyPlan);
+		return supplyShift;
 	}
 }
