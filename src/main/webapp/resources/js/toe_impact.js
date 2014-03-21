@@ -40,7 +40,6 @@ var _stackArea = d3.svg.area().x(function(d) {
 var _stack = d3.layout.stack().values(function(d) {
 	return d.values;
 });
-;
 
 var _svg = d3.select("body").append("svg").attr("width",
 		_width + _margin.left + _margin.right).attr("height",
@@ -51,18 +50,31 @@ function chartImpact(contextPath, iso, date) {
 	d3.json(contextPath + "/toe_impact/iso/" + iso + "/date/" + date + "/json",
 			function(error, data) {
 				// Color for each fuel type
-				_color.domain(d3.keys(data.generation));
+				_color.domain(d3.keys(data.generation).concat(["OVERSUPPLY"]));
 
 				var generators = _stack(_color.domain().map(function(name) {
-					return {
-						name : name,
-						values : data.generation[name].map(function(d) {
-							return {
-								date : d.date,
-								y : d.megawatts
-							};
-						})
-					};
+					if(d3.keys(data.generation).indexOf(name) > -1) {
+						return {
+							name : name,
+							values : data.generation[name].map(function(d) {
+								return {
+									date : d.date,
+									y : d.megawatts
+								};
+							})
+						};
+					} else if (name === "OVERSUPPLY") {
+						
+						return {
+							name : name,
+							values : data.oversupply.map(function(d) {
+								return {
+									date : d.date,
+									y : d.megawatts
+								};
+							})
+						};
+					}
 				}));
 
 				_x.domain(d3.extent(data.oversupply, function(d) {
@@ -100,6 +112,11 @@ function chartImpact(contextPath, iso, date) {
 				});
 
 				// SBG area
+				_svg.append("g").append("path").datum(data.oversupply)
+						.attr("class", "area").attr("d", _stackArea).style(
+								"fill", function(d) {
+									return _color(d.name);
+								});
 				// _svg.append("path").datum(data.oversupply)
 				// .attr("class", "area").attr("d", _area);
 
