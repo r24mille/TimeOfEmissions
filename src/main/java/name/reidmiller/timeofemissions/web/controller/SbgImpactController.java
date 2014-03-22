@@ -73,8 +73,8 @@ public class SbgImpactController {
 
 			json.put("generation", generation);
 			json.put("oversupply", oversupply);
-			// json.put(GENERATION_SHIFT, supplyShift.get(GENERATION_SHIFT));
-			// json.put(OVERSUPPLY_SHIFT, supplyShift.get(OVERSUPPLY_SHIFT));
+			json.put(GENERATION_SHIFT, supplyShift.get(GENERATION_SHIFT));
+			json.put(OVERSUPPLY_SHIFT, supplyShift.get(OVERSUPPLY_SHIFT));
 			break;
 		default:
 			json.put("null", null);
@@ -273,112 +273,149 @@ public class SbgImpactController {
 				oversupply);
 		int maxHourShift = 4;
 
+		// Order that low-emission generators will be targeted with dispatchable
+		// load
+		List<CommonFuelType> lowEmissionFuelTypes = new ArrayList<CommonFuelType>(
+				4);
+		lowEmissionFuelTypes.add(CommonFuelType.WIND);
+		lowEmissionFuelTypes.add(CommonFuelType.SOLAR_PV);
+		lowEmissionFuelTypes.add(CommonFuelType.HYDROELECTRIC);
+		lowEmissionFuelTypes.add(CommonFuelType.NUCLEAR);
+
+		// Order that high-emission generators will be curtailed
+		List<CommonFuelType> highEmissionFuelTypes = new ArrayList<CommonFuelType>(
+				3);
+		highEmissionFuelTypes.add(CommonFuelType.COAL);
+		highEmissionFuelTypes.add(CommonFuelType.NATURAL_GAS);
+		highEmissionFuelTypes.add(CommonFuelType.OTHER);
+
 		logger.debug("Starting oversupply shift");
-		for (int osHour = 0; osHour < oversupplyPlan.size(); osHour++) {
-			int hourShiftStart = 0;
-			if (osHour - maxHourShift > 0) {
-				hourShiftStart = osHour - maxHourShift;
-			}
-			int hourShiftEnd = 23;
-			if (osHour + maxHourShift < 23) {
-				hourShiftEnd = osHour + maxHourShift;
-			}
-			logger.debug("Oversupply Hour = " + osHour
-					+ ", Minimum Shiftable Hour = " + hourShiftStart
-					+ ", Maximum Shiftable Hour = " + hourShiftEnd + ".");
+		for (CommonFuelType highEmissionFuelType : highEmissionFuelTypes) {
+			for (CommonFuelType lowEmissionFuelType : lowEmissionFuelTypes) {
+				for (int osHour = 0; osHour < oversupplyPlan.size(); osHour++) {
+					int hourShiftStart = 0;
+					if (osHour - maxHourShift > 0) {
+						hourShiftStart = osHour - maxHourShift;
+					}
+					int hourShiftEnd = 23;
+					if (osHour + maxHourShift < 23) {
+						hourShiftEnd = osHour + maxHourShift;
+					}
+					logger.debug("Oversupply Hour = " + osHour
+							+ ", Minimum Shiftable Hour = " + hourShiftStart
+							+ ", Maximum Shiftable Hour = " + hourShiftEnd
+							+ ".");
 
-			// For each oversupply hour, check if there is excess above
-			// exportThreshold
-			if (oversupplyPlan.get(osHour).getExcess() > 0) {
-				oversupplyPlan.get(osHour).getExcess();
-				logger.debug(oversupplyPlan.get(osHour).getExcess()
-						+ " MW excess oversupply in hour " + osHour);
+					// For each oversupply hour, check if there is excess above
+					// exportThreshold
+					if (oversupplyPlan.get(osHour).getExcess() > 0) {
+						oversupplyPlan.get(osHour).getExcess();
+						logger.debug(oversupplyPlan.get(osHour).getExcess()
+								+ " MW excess oversupply in hour " + osHour);
 
-				// Add all CommonAggregateGeneration elements in the range,
-				// ranked by Time-of-Emissions preference
-				TreeSet<CommonAggregateGeneration> shiftRanks = new TreeSet<CommonAggregateGeneration>(
-						new TimeOfEmissionsGenerationComparator());
-				shiftRanks.addAll(generationPlan
-						.get(CommonFuelType.NATURAL_GAS).subList(
+						// Add all CommonAggregateGeneration elements in the
+						// range,
+						// ranked by Time-of-Emissions preference
+						TreeSet<CommonAggregateGeneration> shiftRanks = new TreeSet<CommonAggregateGeneration>(
+								new TimeOfEmissionsGenerationComparator());
+						shiftRanks.addAll(generationPlan.get(
+								highEmissionFuelType).subList(
 								hourShiftStart, hourShiftEnd + 1));
 
-				// Iterate through generators ranked by shiftability
-				int rank = 0;
-				for (CommonAggregateGeneration rankedGeneration : shiftRanks) {
-					// TODO Daylight savings time error here, duplicate indexes
-					// as well
-					int hourShift = new DateTime(rankedGeneration.getDate())
-							.getHourOfDay();
-					logger.debug("fuel="
-							+ rankedGeneration.getCommonFuelType()
-							+ ", rank="
-							+ rank
-							+ ", hour="
-							+ hourShift
-							+ ", rate="
-							+ rankedGeneration.getTimeOfUseRate()
-							+ ", emissions="
-							+ rankedGeneration.getCommonFuelType()
-									.getGramsCarbonDioxideForKWHeValue(
-											rankedGeneration.getScheduledMW())
-							+ ", capacity="
-							+ rankedGeneration.getAvailableCapacityMW());
+						// Iterate through generators ranked by shiftability
+						int rank = 0;
+						for (CommonAggregateGeneration rankedGeneration : shiftRanks) {
+							// TODO Daylight savings time error here, duplicate
+							// indexes
+							// as well
+							int hourShift = new DateTime(
+									rankedGeneration.getDate()).getHourOfDay();
+							logger.debug("fuel="
+									+ rankedGeneration.getCommonFuelType()
+									+ ", rank="
+									+ rank
+									+ ", hour="
+									+ hourShift
+									+ ", rate="
+									+ rankedGeneration.getTimeOfUseRate()
+									+ ", emissions="
+									+ rankedGeneration.getCommonFuelType()
+											.getGramsCarbonDioxideForKWHeValue(
+													rankedGeneration
+															.getScheduledMW())
+									+ ", capacity="
+									+ rankedGeneration.getAvailableCapacityMW());
 
-					// Shift as much consumption from excess as there is excess
-					// scheduled high-emissions, available low-emissions
-					// capacity, and remaining excess
-					double shiftMW = Math.min(Math.min(
-							rankedGeneration.getScheduledMW(), generationPlan
-									.get(CommonFuelType.WIND).get(osHour)
-									.getAvailableCapacityMW()), oversupplyPlan
-							.get(osHour).getExcess());
-					// Sometimes generators will be scheduled for
+							// Shift as much consumption from excess as there is
+							// excess
+							// scheduled high-emissions, available low-emissions
+							// capacity, and remaining excess
+							double shiftMW = Math.min(Math.min(
+									rankedGeneration.getScheduledMW(),
+									generationPlan.get(lowEmissionFuelType)
+											.get(osHour)
+											.getAvailableCapacityMW()),
+									oversupplyPlan.get(osHour).getExcess());
+							// Sometimes generators will be scheduled for
 
-					generationPlan.get(CommonFuelType.NATURAL_GAS)
-							.get(hourShift).scheduleGenerationMW(0 - shiftMW);
-					logger.debug("After "
-							+ CommonFuelType.NATURAL_GAS
-							+ " generation change scheduledMW="
-							+ generationPlan.get(CommonFuelType.NATURAL_GAS)
-									.get(hourShift).getScheduledMW()
-							+ ", offeredMW="
-							+ generationPlan.get(CommonFuelType.NATURAL_GAS)
-									.get(hourShift).getOfferedMW()
-							+ ", availableCapacityMW="
-							+ generationPlan.get(CommonFuelType.NATURAL_GAS)
-									.get(hourShift).getAvailableCapacityMW());
+							generationPlan.get(highEmissionFuelType)
+									.get(hourShift)
+									.scheduleGenerationMW(0 - shiftMW);
+							logger.debug("After "
+									+ highEmissionFuelType
+									+ " generation change scheduledMW="
+									+ generationPlan
+											.get(highEmissionFuelType)
+											.get(hourShift).getScheduledMW()
+									+ ", offeredMW="
+									+ generationPlan
+											.get(highEmissionFuelType)
+											.get(hourShift).getOfferedMW()
+									+ ", availableCapacityMW="
+									+ generationPlan
+											.get(highEmissionFuelType)
+											.get(hourShift)
+											.getAvailableCapacityMW());
 
-					generationPlan.get(CommonFuelType.WIND).get(osHour)
-							.scheduleGenerationMW(shiftMW);
-					logger.debug("After "
-							+ CommonFuelType.WIND
-							+ " generation change scheduledMW="
-							+ generationPlan.get(CommonFuelType.WIND)
-									.get(osHour).getScheduledMW()
-							+ ", offeredMW="
-							+ generationPlan.get(CommonFuelType.WIND)
-									.get(osHour).getOfferedMW()
-							+ ", availableCapacityMW="
-							+ generationPlan.get(CommonFuelType.WIND)
-									.get(osHour).getAvailableCapacityMW());
-					
-					// TODO Add shiftMW to DISPATCHABLE_LOAD's offerMW for shiftHour
+							generationPlan.get(lowEmissionFuelType).get(osHour)
+									.scheduleGenerationMW(shiftMW);
+							logger.debug("After "
+									+ lowEmissionFuelType
+									+ " generation change scheduledMW="
+									+ generationPlan.get(lowEmissionFuelType)
+											.get(osHour).getScheduledMW()
+									+ ", offeredMW="
+									+ generationPlan.get(lowEmissionFuelType)
+											.get(osHour).getOfferedMW()
+									+ ", availableCapacityMW="
+									+ generationPlan.get(lowEmissionFuelType)
+											.get(osHour)
+											.getAvailableCapacityMW());
 
-					logger.debug("excessMW="
-							+ oversupplyPlan.get(osHour).getExcess()
-							+ " lowered by shiftMW=" + shiftMW);
-					oversupplyPlan.get(osHour).setExcess(
-							oversupplyPlan.get(osHour).getExcess() - shiftMW);
-					
-					// TODO Add shiftMW to DISPATCHABLE_LOAD's scheduleMW for osHour
-					// TODO Remove shiftMW from DISPATCHABLE_LOAD's offerMW for osHour
-					
-					// Step rank if there is still excess, break if no excess
-					// left
-					if (oversupplyPlan.get(osHour).getExcess() <= 0) {
-						break;
-					} else {
-						rank++;
+							// TODO Add shiftMW to DISPATCHABLE_LOAD's offerMW
+							// for shiftHour
+
+							logger.debug("excessMW="
+									+ oversupplyPlan.get(osHour).getExcess()
+									+ " lowered by shiftMW=" + shiftMW);
+							oversupplyPlan.get(osHour).setExcess(
+									oversupplyPlan.get(osHour).getExcess()
+											- shiftMW);
+
+							// TODO Add shiftMW to DISPATCHABLE_LOAD's
+							// scheduleMW for osHour
+							// TODO Remove shiftMW from DISPATCHABLE_LOAD's
+							// offerMW for osHour
+
+							// Step rank if there is still excess, break if no
+							// excess
+							// left
+							if (oversupplyPlan.get(osHour).getExcess() <= 0) {
+								break;
+							} else {
+								rank++;
+							}
+						}
 					}
 				}
 			}
