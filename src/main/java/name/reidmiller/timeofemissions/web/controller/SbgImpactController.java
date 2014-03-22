@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -266,12 +267,22 @@ public class SbgImpactController {
 	private HashMap<String, Object> shiftSupply(
 			TreeMap<CommonFuelType, List<CommonAggregateGeneration>> generation,
 			List<CommonOversupply> oversupply) {
-		@SuppressWarnings("unchecked")
-		TreeMap<CommonFuelType, List<CommonAggregateGeneration>> generationPlan = (TreeMap<CommonFuelType, List<CommonAggregateGeneration>>) generation
-				.clone();
-		List<CommonOversupply> oversupplyPlan = new ArrayList<CommonOversupply>(
-				oversupply);
 		int maxHourShift = 4;
+		
+		// Deep clone both generation and oversupply
+		TreeMap<CommonFuelType, List<CommonAggregateGeneration>> generationPlan = new TreeMap<CommonFuelType, List<CommonAggregateGeneration>>();
+		for (Entry<CommonFuelType, List<CommonAggregateGeneration>> entry : generation.entrySet()) {
+			ArrayList<CommonAggregateGeneration> clonedValue = new ArrayList<CommonAggregateGeneration>(entry.getValue().size());
+			for (CommonAggregateGeneration commonAggregateGeneration : entry.getValue()) {
+				clonedValue.add(commonAggregateGeneration.clone());
+			}
+			generationPlan.put(entry.getKey(), clonedValue);
+		}
+		
+		List<CommonOversupply> oversupplyPlan = new ArrayList<CommonOversupply>(oversupply.size());
+		for (CommonOversupply commonOversupply : oversupply) {
+			oversupplyPlan.add(commonOversupply.clone());
+		}
 
 		// Order that low-emission generators will be targeted with dispatchable
 		// load

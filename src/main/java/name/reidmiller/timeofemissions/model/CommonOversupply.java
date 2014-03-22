@@ -2,7 +2,7 @@ package name.reidmiller.timeofemissions.model;
 
 import java.util.Date;
 
-public class CommonOversupply {
+public class CommonOversupply implements Cloneable {
 	private Date date;
 	private double megawatts;
 	private double exportThreshold;
@@ -15,12 +15,18 @@ public class CommonOversupply {
 		this.megawatts = megawatts;
 		this.exportThreshold = exportThreshold;
 		this.dataPointType = dataPointType;
-		
+
 		if (megawatts > exportThreshold) {
 			this.excess = megawatts - exportThreshold;
 		} else {
 			this.excess = 0;
 		}
+	}
+
+	@Override
+	public CommonOversupply clone() {
+		return new CommonOversupply((Date) this.date.clone(), this.megawatts,
+				this.exportThreshold, this.dataPointType);
 	}
 
 	public Date getDate() {

@@ -6,7 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 
-public class CommonAggregateGeneration {
+public class CommonAggregateGeneration implements Cloneable {
 	private Logger logger = LogManager.getLogger(this.getClass());
 	private CommonFuelType commonFuelType;
 	private Date date;
@@ -32,12 +32,20 @@ public class CommonAggregateGeneration {
 				this.timeOfUseSeason, (dateTime.getDayOfWeek() > 5));
 	}
 
+	@Override
+	public CommonAggregateGeneration clone() {
+		return new CommonAggregateGeneration(this.commonFuelType,
+				(Date) this.date.clone(), this.dataPointType, this.scheduledMW,
+				this.offeredMW);
+	}
+
 	/**
 	 * Schedule a change to the generation plan. This adds to scheduledMW,
 	 * subtracts from offeredMW, and subtracts from availableCapacityMW
 	 */
 	public void scheduleGenerationMW(double megawatts) {
-		logger.debug("Before " + this.commonFuelType + " generation change scheduledMW=" + this.scheduledMW
+		logger.debug("Before " + this.commonFuelType
+				+ " generation change scheduledMW=" + this.scheduledMW
 				+ ", offeredMW=" + this.offeredMW + ", availableCapacityMW="
 				+ this.availableCapacityMW);
 		this.scheduledMW = this.scheduledMW + megawatts;
