@@ -1,6 +1,6 @@
 var _margin = {
 	top : 20,
-	right : 20,
+	right : 100,
 	bottom : 30,
 	left : 50
 };
@@ -133,7 +133,7 @@ function chartImpact(contextPath, iso, date) {
 						function(d) {
 							return "translate(" + _x(d.value.date) + ","
 									+ _y(d.value.y0 + d.value.y / 2) + ")";
-						}).attr("x", -75).attr("dy", ".35em").text(function(d) {
+						}).attr("x", 0).attr("dy", ".35em").text(function(d) {
 					return d.name;
 				}).attr("id", function(d, i) {
 					return d.name + "-text";
@@ -152,15 +152,19 @@ function chartImpact(contextPath, iso, date) {
 				d3.select("body").on(
 						"click",
 						function(d) {
+							// Update the day-ahead forecast with the shifted plan
 							_svg.selectAll(".generator").select("path").data(
 									generators_shift).transition().duration(
 									_transitionDuration).attr("d", function(d) {
 								return _stackArea(d.values);
 							});
 
+							// Remove OVERSUPPLY label if all oversupply has been shifted
 							generators_shift.map(function(d) {
 								if (d.name === "OVERSUPPLY") {
-									if (d3.sum(d.values) == 0) {
+									if (d3.sum(d.values.map(function(v) {
+										return v.y;
+									})) === 0) {
 										d3.select("#OVERSUPPLY-text")
 												.transition().duration(
 														_transitionDuration)
