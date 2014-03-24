@@ -149,12 +149,17 @@ public class SbgImpactController {
 	 */
 	public TreeMap<CommonFuelType, List<CommonAggregateGeneration>> getIesoAggregateDayAheadForecastMix(
 			DateTime forecastedDateTime) {
-		DateTime daaSolarChange = sbgTimestampFormatter.parseDateTime("2013-06-30 23:59:59");
+		DateTime daaSolarChange = sbgTimestampFormatter
+				.parseDateTime("2013-06-30 23:59:59");
+		DateTime daaLocalCache = sbgTimestampFormatter
+				.parseDateTime("2013-10-31 23:59:59");
 		TreeMap<CommonFuelType, List<CommonAggregateGeneration>> commonAggregateGenerationForecast = new TreeMap<CommonFuelType, List<CommonAggregateGeneration>>();
 		DayAheadAdequacyClient dayAheadAdequacyClient = IesoPublicReportBindingsConfig
 				.dayAheadAdequacyClient();
-		dayAheadAdequacyClient
-				.setDefaultUrlString("http://localhost:8080/time-of-emissions/resources/xml/daadequacy/PUB_DAAdequacy.xml");
+		if (forecastedDateTime.isBefore(daaLocalCache)) {
+			dayAheadAdequacyClient
+					.setDefaultUrlString("http://localhost:8080/time-of-emissions/resources/xml/daadequacy/PUB_DAAdequacy.xml");
+		}
 		try {
 			ca.ieso.reports.schema.daadequacy.DocBody docBody = dayAheadAdequacyClient
 					.getDocBodyForDate(forecastedDateTime.toDate());
