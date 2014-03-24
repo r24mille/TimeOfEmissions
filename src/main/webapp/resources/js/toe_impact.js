@@ -12,7 +12,6 @@ var _y = d3.scale.linear().range([ _height, 0 ]);
 var _xAxis = d3.svg.axis().scale(_x).orient("bottom");
 var _yAxis = d3.svg.axis().scale(_y).orient("left");
 
-var _color = d3.scale.category10();
 var _transitionDuration = 3000;
 
 // Generator stack
@@ -49,14 +48,11 @@ function chartImpact(contextPath, iso, date) {
 							}) > 0) {
 								return e.key;
 							}
-						});
-
-				// Color for each fuel type
-				_color.domain(usedFuelNames.filter(function(d) {
+						}).filter(function(d) {
 					return d !== undefined && d !== "DISPATCHABLE_LOAD";
-				}).concat([ "OVERSUPPLY" ]));
+				}).concat([ "OVERSUPPLY" ]);
 
-				var generators = _stack(_color.domain().map(function(name) {
+				var generators = _stack(usedFuelNames.map(function(name) {
 					if (d3.keys(data.generation).indexOf(name) > -1) {
 						return {
 							name : name,
@@ -80,34 +76,30 @@ function chartImpact(contextPath, iso, date) {
 					}
 				}));
 
-				var generators_shift = _stack(_color.domain()
-						.map(
-								function(name) {
-									if (d3.keys(data.generationShift).indexOf(
-											name) > -1) {
-										return {
-											name : name,
-											values : data.generationShift[name]
-													.map(function(d, i) {
-														return {
-															date : d.date,
-															y : d.scheduledMW
-														};
-													})
-										};
-									} else if (name === "OVERSUPPLY") {
-										return {
-											name : name,
-											values : data.oversupplyShift
-													.map(function(d) {
-														return {
-															date : d.date,
-															y : d.excess
-														};
-													})
-										};
-									}
-								}));
+				var generators_shift = _stack(usedFuelNames.map(function(name) {
+					if (d3.keys(data.generationShift).indexOf(name) > -1) {
+						return {
+							name : name,
+							values : data.generationShift[name].map(function(d,
+									i) {
+								return {
+									date : d.date,
+									y : d.scheduledMW
+								};
+							})
+						};
+					} else if (name === "OVERSUPPLY") {
+						return {
+							name : name,
+							values : data.oversupplyShift.map(function(d) {
+								return {
+									date : d.date,
+									y : d.excess
+								};
+							})
+						};
+					}
+				}));
 
 				_x.domain(d3.extent(data.oversupply, function(d) {
 					return d.date;
@@ -128,7 +120,7 @@ function chartImpact(contextPath, iso, date) {
 						}).attr("id", function(d, i) {
 					return d.name + "-path";
 				}).style("fill", function(d) {
-					return _color(d.name);
+					return data.colors[d.name];
 				});
 
 				generator.append("text").datum(function(d) {

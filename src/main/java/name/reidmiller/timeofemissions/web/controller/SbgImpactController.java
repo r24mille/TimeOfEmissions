@@ -76,6 +76,14 @@ public class SbgImpactController {
 			json.put("oversupply", oversupply);
 			json.put(GENERATION_SHIFT, supplyShift.get(GENERATION_SHIFT));
 			json.put(OVERSUPPLY_SHIFT, supplyShift.get(OVERSUPPLY_SHIFT));
+			
+			HashMap<String, String> colors = new HashMap<String, String>();
+			for (CommonFuelType commonFuelType : generation.keySet()) {
+				colors.put(commonFuelType.toString(), commonFuelType.getGraphColor());
+			}
+			colors.put("OVERSUPPLY", "#787878");
+			json.put("colors", colors);
+			
 			break;
 		default:
 			json.put("null", null);
