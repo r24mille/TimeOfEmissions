@@ -9,7 +9,7 @@
 <body>
 	<script src="<%=request.getContextPath()%>/resources/js/toe_impact.js"></script>
 	<script>
-		chartImpact("${pageContext.request.contextPath}", "IESO", "2014-03-15");
+		chartImpact("${pageContext.request.contextPath}", "IESO", "${date}");
 	</script>
 </body>
 </html>

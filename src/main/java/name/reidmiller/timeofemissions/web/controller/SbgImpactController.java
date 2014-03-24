@@ -5,7 +5,6 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -17,7 +16,6 @@ import name.reidmiller.timeofemissions.model.CommonAggregateGeneration;
 import name.reidmiller.timeofemissions.model.CommonFuelType;
 import name.reidmiller.timeofemissions.model.CommonOversupply;
 import name.reidmiller.timeofemissions.model.DataPointType;
-import name.reidmiller.timeofemissions.model.DemandShift;
 import name.reidmiller.timeofemissions.model.Iso;
 import name.reidmiller.timeofemissions.model.TimeOfEmissionsGenerationComparator;
 
@@ -44,13 +42,15 @@ import ca.ieso.reports.schema.sbg.Document.DocBody.DailyForecast.HourlyForecast;
 @Controller
 public class SbgImpactController {
 	private Logger logger = LogManager.getLogger(this.getClass());
+	private static final int MAX_HOUR_SHIFT = 14;
 	private static final String GENERATION_SHIFT = "generationShift";
 	private static final String OVERSUPPLY_SHIFT = "oversupplyShift";
 	DateTimeFormatter sbgTimestampFormatter = DateTimeFormat
 			.forPattern("yyyy-MM-dd H:mm:ss");
 
-	@RequestMapping("/toe_impact/html")
-	public String generatorOutput(Model model) {
+	@RequestMapping(value = "/toe_impact/date/{datePart}/html", method = RequestMethod.GET)
+	public String generatorOutput(@PathVariable String datePart, Model model) {
+		model.addAttribute("date", datePart);
 		return "toe_impact";
 	}
 
@@ -76,14 +76,15 @@ public class SbgImpactController {
 			json.put("oversupply", oversupply);
 			json.put(GENERATION_SHIFT, supplyShift.get(GENERATION_SHIFT));
 			json.put(OVERSUPPLY_SHIFT, supplyShift.get(OVERSUPPLY_SHIFT));
-			
+
 			HashMap<String, String> colors = new HashMap<String, String>();
 			for (CommonFuelType commonFuelType : generation.keySet()) {
-				colors.put(commonFuelType.toString(), commonFuelType.getGraphColor());
+				colors.put(commonFuelType.toString(),
+						commonFuelType.getGraphColor());
 			}
 			colors.put("OVERSUPPLY", "#787878");
 			json.put("colors", colors);
-			
+
 			break;
 		default:
 			json.put("null", null);
@@ -148,9 +149,12 @@ public class SbgImpactController {
 	 */
 	public TreeMap<CommonFuelType, List<CommonAggregateGeneration>> getIesoAggregateDayAheadForecastMix(
 			DateTime forecastedDateTime) {
+		DateTime daaSolarChange = sbgTimestampFormatter.parseDateTime("2013-06-30 23:59:59");
 		TreeMap<CommonFuelType, List<CommonAggregateGeneration>> commonAggregateGenerationForecast = new TreeMap<CommonFuelType, List<CommonAggregateGeneration>>();
 		DayAheadAdequacyClient dayAheadAdequacyClient = IesoPublicReportBindingsConfig
 				.dayAheadAdequacyClient();
+		dayAheadAdequacyClient
+				.setDefaultUrlString("http://localhost:8080/time-of-emissions/resources/xml/daadequacy/PUB_DAAdequacy.xml");
 		try {
 			ca.ieso.reports.schema.daadequacy.DocBody docBody = dayAheadAdequacyClient
 					.getDocBodyForDate(forecastedDateTime.toDate());
@@ -196,13 +200,25 @@ public class SbgImpactController {
 							commonFuelType = CommonFuelType.WIND;
 							break;
 						case 5:
-							commonFuelType = CommonFuelType.SOLAR_PV;
+							if (forecastedDateTime.isAfter(daaSolarChange)) {
+								commonFuelType = CommonFuelType.SOLAR_PV;
+							} else {
+								commonFuelType = CommonFuelType.OTHER;
+							}
 							break;
 						case 6:
-							commonFuelType = CommonFuelType.OTHER;
+							if (forecastedDateTime.isAfter(daaSolarChange)) {
+								commonFuelType = CommonFuelType.OTHER;
+							} else {
+								commonFuelType = CommonFuelType.DISPATCHABLE_LOAD;
+							}
 							break;
 						case 7:
-							commonFuelType = CommonFuelType.DISPATCHABLE_LOAD;
+							if (forecastedDateTime.isAfter(daaSolarChange)) {
+								commonFuelType = CommonFuelType.DISPATCHABLE_LOAD;
+							} else {
+								commonFuelType = null;
+							}
 							break;
 						default:
 							commonFuelType = null;
@@ -275,19 +291,21 @@ public class SbgImpactController {
 	private HashMap<String, Object> shiftSupply(
 			TreeMap<CommonFuelType, List<CommonAggregateGeneration>> generation,
 			List<CommonOversupply> oversupply) {
-		int maxHourShift = 4;
-		
 		// Deep clone both generation and oversupply
 		TreeMap<CommonFuelType, List<CommonAggregateGeneration>> generationPlan = new TreeMap<CommonFuelType, List<CommonAggregateGeneration>>();
-		for (Entry<CommonFuelType, List<CommonAggregateGeneration>> entry : generation.entrySet()) {
-			ArrayList<CommonAggregateGeneration> clonedValue = new ArrayList<CommonAggregateGeneration>(entry.getValue().size());
-			for (CommonAggregateGeneration commonAggregateGeneration : entry.getValue()) {
+		for (Entry<CommonFuelType, List<CommonAggregateGeneration>> entry : generation
+				.entrySet()) {
+			ArrayList<CommonAggregateGeneration> clonedValue = new ArrayList<CommonAggregateGeneration>(
+					entry.getValue().size());
+			for (CommonAggregateGeneration commonAggregateGeneration : entry
+					.getValue()) {
 				clonedValue.add(commonAggregateGeneration.clone());
 			}
 			generationPlan.put(entry.getKey(), clonedValue);
 		}
-		
-		List<CommonOversupply> oversupplyPlan = new ArrayList<CommonOversupply>(oversupply.size());
+
+		List<CommonOversupply> oversupplyPlan = new ArrayList<CommonOversupply>(
+				oversupply.size());
 		for (CommonOversupply commonOversupply : oversupply) {
 			oversupplyPlan.add(commonOversupply.clone());
 		}
@@ -297,7 +315,9 @@ public class SbgImpactController {
 		List<CommonFuelType> lowEmissionFuelTypes = new ArrayList<CommonFuelType>(
 				4);
 		lowEmissionFuelTypes.add(CommonFuelType.WIND);
-		lowEmissionFuelTypes.add(CommonFuelType.SOLAR_PV);
+		if (generationPlan.containsKey(CommonFuelType.SOLAR_PV)) {
+			lowEmissionFuelTypes.add(CommonFuelType.SOLAR_PV);
+		}
 		lowEmissionFuelTypes.add(CommonFuelType.HYDROELECTRIC);
 		lowEmissionFuelTypes.add(CommonFuelType.NUCLEAR);
 
@@ -313,12 +333,12 @@ public class SbgImpactController {
 			for (CommonFuelType lowEmissionFuelType : lowEmissionFuelTypes) {
 				for (int osHour = 0; osHour < oversupplyPlan.size(); osHour++) {
 					int hourShiftStart = 0;
-					if (osHour - maxHourShift > 0) {
-						hourShiftStart = osHour - maxHourShift;
+					if (osHour - MAX_HOUR_SHIFT > 0) {
+						hourShiftStart = osHour - MAX_HOUR_SHIFT;
 					}
 					int hourShiftEnd = 23;
-					if (osHour + maxHourShift < 23) {
-						hourShiftEnd = osHour + maxHourShift;
+					if (osHour + MAX_HOUR_SHIFT < 23) {
+						hourShiftEnd = osHour + MAX_HOUR_SHIFT;
 					}
 					logger.debug("Oversupply Hour = " + osHour
 							+ ", Minimum Shiftable Hour = " + hourShiftStart
@@ -338,8 +358,8 @@ public class SbgImpactController {
 						TreeSet<CommonAggregateGeneration> shiftRanks = new TreeSet<CommonAggregateGeneration>(
 								new TimeOfEmissionsGenerationComparator());
 						shiftRanks.addAll(generationPlan.get(
-								highEmissionFuelType).subList(
-								hourShiftStart, hourShiftEnd + 1));
+								highEmissionFuelType).subList(hourShiftStart,
+								hourShiftEnd + 1));
 
 						// Iterate through generators ranked by shiftability
 						int rank = 0;
@@ -383,16 +403,13 @@ public class SbgImpactController {
 							logger.debug("After "
 									+ highEmissionFuelType
 									+ " generation change scheduledMW="
-									+ generationPlan
-											.get(highEmissionFuelType)
+									+ generationPlan.get(highEmissionFuelType)
 											.get(hourShift).getScheduledMW()
 									+ ", offeredMW="
-									+ generationPlan
-											.get(highEmissionFuelType)
+									+ generationPlan.get(highEmissionFuelType)
 											.get(hourShift).getOfferedMW()
 									+ ", availableCapacityMW="
-									+ generationPlan
-											.get(highEmissionFuelType)
+									+ generationPlan.get(highEmissionFuelType)
 											.get(hourShift)
 											.getAvailableCapacityMW());
 
