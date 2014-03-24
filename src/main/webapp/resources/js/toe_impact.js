@@ -13,6 +13,7 @@ var _xAxis = d3.svg.axis().scale(_x).orient("bottom");
 var _yAxis = d3.svg.axis().scale(_y).orient("left");
 
 var _color = d3.scale.category10();
+var _transitionDuration = 3000;
 
 // Generator stack
 var _stackArea = d3.svg.area().x(function(d) {
@@ -35,6 +36,11 @@ var _svg = d3.select("body").append("svg").attr("width",
 function chartImpact(contextPath, iso, date) {
 	d3.json(contextPath + "/toe_impact/iso/" + iso + "/date/" + date + "/json",
 			function(error, data) {
+				var hours = [];
+				for (var i = 0; i <= 23; i++) {
+					hours.push(i);
+				}
+
 				// Use only the names of fuel types with values
 				var usedFuelNames = d3.entries(data.generation).map(
 						function(e) {
@@ -47,14 +53,14 @@ function chartImpact(contextPath, iso, date) {
 
 				// Color for each fuel type
 				_color.domain(usedFuelNames.filter(function(d) {
-					return d !== undefined;
+					return d !== undefined && d !== "DISPATCHABLE_LOAD";
 				}).concat([ "OVERSUPPLY" ]));
 
 				var generators = _stack(_color.domain().map(function(name) {
 					if (d3.keys(data.generation).indexOf(name) > -1) {
 						return {
 							name : name,
-							values : data.generation[name].map(function(d) {
+							values : data.generation[name].map(function(d, i) {
 								return {
 									date : d.date,
 									y : d.scheduledMW
@@ -74,6 +80,35 @@ function chartImpact(contextPath, iso, date) {
 					}
 				}));
 
+				var generators_shift = _stack(_color.domain()
+						.map(
+								function(name) {
+									if (d3.keys(data.generationShift).indexOf(
+											name) > -1) {
+										return {
+											name : name,
+											values : data.generationShift[name]
+													.map(function(d, i) {
+														return {
+															date : d.date,
+															y : d.scheduledMW
+														};
+													})
+										};
+									} else if (name === "OVERSUPPLY") {
+										return {
+											name : name,
+											values : data.oversupplyShift
+													.map(function(d) {
+														return {
+															date : d.date,
+															y : d.excess
+														};
+													})
+										};
+									}
+								}));
+
 				_x.domain(d3.extent(data.oversupply, function(d) {
 					return d.date;
 				}));
@@ -90,7 +125,9 @@ function chartImpact(contextPath, iso, date) {
 				generator.append("path").attr("class", "area").attr("d",
 						function(d) {
 							return _stackArea(d.values);
-						}).style("fill", function(d) {
+						}).attr("id", function(d, i) {
+					return d.name + "-path";
+				}).style("fill", function(d) {
 					return _color(d.name);
 				});
 
@@ -106,15 +143,11 @@ function chartImpact(contextPath, iso, date) {
 									+ _y(d.value.y0 + d.value.y / 2) + ")";
 						}).attr("x", -75).attr("dy", ".35em").text(function(d) {
 					return d.name;
+				}).attr("id", function(d, i) {
+					return d.name + "-text";
 				});
 
-				// SBG area
-				_svg.append("g").append("path").datum(data.oversupply).attr(
-						"class", "area").attr("d", _stackArea).style("fill",
-						function(d) {
-							return _color(d.name);
-						});
-
+				// Generators' area
 				_svg.append("g").attr("class", "x axis").attr("transform",
 						"translate(0," + _height + ")").call(_xAxis);
 
@@ -122,5 +155,27 @@ function chartImpact(contextPath, iso, date) {
 						"text").attr("transform", "rotate(-90)").attr("y", 6)
 						.attr("dy", ".71em").style("text-anchor", "end").text(
 								"Demand (MW)");
+
+				// Transition on-click callback
+				d3.select("body").on(
+						"click",
+						function(d) {
+							_svg.selectAll(".generator").select("path").data(
+									generators_shift).transition().duration(
+									_transitionDuration).attr("d", function(d) {
+								return _stackArea(d.values);
+							});
+
+							generators_shift.map(function(d) {
+								if (d.name === "OVERSUPPLY") {
+									if (d3.sum(d.values) == 0) {
+										d3.select("#OVERSUPPLY-text")
+												.transition().duration(
+														_transitionDuration)
+												.style("opacity", 0);
+									}
+								}
+							})
+						});
 			});
 }
