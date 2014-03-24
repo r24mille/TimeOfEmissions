@@ -17,7 +17,7 @@ import name.reidmiller.timeofemissions.model.CommonFuelType;
 import name.reidmiller.timeofemissions.model.CommonOversupply;
 import name.reidmiller.timeofemissions.model.DataPointType;
 import name.reidmiller.timeofemissions.model.Iso;
-import name.reidmiller.timeofemissions.model.TimeOfEmissionsGenerationComparator;
+import name.reidmiller.timeofemissions.model.TimeOfEmissionsTargettedGenerationComparator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,7 +42,7 @@ import ca.ieso.reports.schema.sbg.Document.DocBody.DailyForecast.HourlyForecast;
 @Controller
 public class SbgImpactController {
 	private Logger logger = LogManager.getLogger(this.getClass());
-	private static final int MAX_HOUR_SHIFT = 14;
+	private static final int MAX_HOUR_SHIFT = 6;
 	private static final String GENERATION_SHIFT = "generationShift";
 	private static final String OVERSUPPLY_SHIFT = "oversupplyShift";
 	DateTimeFormatter sbgTimestampFormatter = DateTimeFormat
@@ -361,7 +361,7 @@ public class SbgImpactController {
 						// range,
 						// ranked by Time-of-Emissions preference
 						TreeSet<CommonAggregateGeneration> shiftRanks = new TreeSet<CommonAggregateGeneration>(
-								new TimeOfEmissionsGenerationComparator());
+								new TimeOfEmissionsTargettedGenerationComparator());
 						shiftRanks.addAll(generationPlan.get(
 								highEmissionFuelType).subList(hourShiftStart,
 								hourShiftEnd + 1));
