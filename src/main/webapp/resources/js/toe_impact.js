@@ -1,11 +1,12 @@
+// Extra right padding to fit legend
 var _margin = {
 	top : 20,
-	right : 100,
+	right : 125,
 	bottom : 30,
 	left : 50
 };
-var _width = 960 - _margin.left - _margin.right;
-var _height = 500 - _margin.top - _margin.bottom;
+var _width = 1200 - _margin.left - _margin.right;
+var _height = 600 - _margin.top - _margin.bottom;
 
 var _x = d3.time.scale().range([ 0, _width ]);
 var _y = d3.scale.linear().range([ _height, 0 ]);
@@ -109,7 +110,7 @@ function chartImpact(contextPath, iso, date) {
 					return d3.max(data.generation[d].map(function(e) {
 						return e.scheduledMW;
 					}));
-				}) ]);
+				}) + 3000 ]); // Select max hourly demand + 3000MW padding
 
 				var generator = _svg.selectAll(".generator").data(generators)
 						.enter().append("g").attr("class", "generator");
@@ -123,21 +124,42 @@ function chartImpact(contextPath, iso, date) {
 					return data.colors[d.name];
 				});
 
-				generator.append("text").datum(function(d) {
-					return {
-						name : d.name,
-						value : d.values[d.values.length - 1]
-					};
-				}).attr(
-						"transform",
-						function(d) {
-							return "translate(" + _x(d.value.date) + ","
-									+ _y(d.value.y0 + d.value.y / 2) + ")";
-						}).attr("x", 0).attr("dy", ".35em").text(function(d) {
-					return d.name;
-				}).attr("id", function(d, i) {
-					return d.name + "-text";
-				});
+				// Update legend
+				var legend = _svg.selectAll(".legend").data(
+						usedFuelNames.reverse());
+
+				legend.enter().append("g").attr("class", "legend").attr(
+						"transform", function(d, i) {
+							return "translate(0," + i * 20 + ")";
+						});
+
+				legend.append("rect").attr("x", (_width + _margin.right - 18))
+						.attr("width", 18).attr("height", 18).style("fill",
+								function(d) {
+									return data.colors[d];
+								});
+
+				legend.append("text").attr("x", (_width + _margin.right - 24))
+						.attr("y", 9).attr("dy", ".35em").style("text-anchor",
+								"end").text(function(d) {
+							return d;
+						});
+
+				// generator.append("text").datum(function(d) {
+				// return {
+				// name : d.name,
+				// value : d.values[d.values.length - 1]
+				// };
+				// }).attr(
+				// "transform",
+				// function(d) {
+				// return "translate(" + _x(d.value.date) + ","
+				// + _y(d.value.y0 + d.value.y / 2) + ")";
+				// }).attr("x", 0).attr("dy", ".35em").text(function(d) {
+				// return d.name;
+				// }).attr("id", function(d, i) {
+				// return d.name + "-text";
+				// });
 
 				// Generators' area
 				_svg.append("g").attr("class", "x axis").attr("transform",
@@ -152,14 +174,16 @@ function chartImpact(contextPath, iso, date) {
 				d3.select("body").on(
 						"click",
 						function(d) {
-							// Update the day-ahead forecast with the shifted plan
+							// Update the day-ahead forecast with the shifted
+							// plan
 							_svg.selectAll(".generator").select("path").data(
 									generators_shift).transition().duration(
 									_transitionDuration).attr("d", function(d) {
 								return _stackArea(d.values);
 							});
 
-							// Remove OVERSUPPLY label if all oversupply has been shifted
+							// Remove OVERSUPPLY label if all oversupply has
+							// been shifted
 							generators_shift.map(function(d) {
 								if (d.name === "OVERSUPPLY") {
 									if (d3.sum(d.values.map(function(v) {

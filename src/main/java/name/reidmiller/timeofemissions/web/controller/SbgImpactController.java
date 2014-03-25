@@ -42,7 +42,7 @@ import ca.ieso.reports.schema.sbg.Document.DocBody.DailyForecast.HourlyForecast;
 @Controller
 public class SbgImpactController {
 	private Logger logger = LogManager.getLogger(this.getClass());
-	private static final int MAX_HOUR_SHIFT = 6;
+	private static final int MAX_HOUR_SHIFT = 4;
 	private static final String GENERATION_SHIFT = "generationShift";
 	private static final String OVERSUPPLY_SHIFT = "oversupplyShift";
 	DateTimeFormatter sbgTimestampFormatter = DateTimeFormat
