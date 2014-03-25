@@ -3,6 +3,7 @@ package name.reidmiller.timeofemissions.web.controller;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -18,6 +19,8 @@ import name.reidmiller.timeofemissions.model.CommonOversupply;
 import name.reidmiller.timeofemissions.model.DataPointType;
 import name.reidmiller.timeofemissions.model.Iso;
 import name.reidmiller.timeofemissions.model.TimeOfEmissionsTargettedGenerationComparator;
+import name.reidmiller.timeofemissions.model.TimeOfUseRate;
+import name.reidmiller.timeofemissions.model.TimeOfUseSeason;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -72,18 +75,46 @@ public class SbgImpactController {
 			HashMap<String, Object> supplyShift = this.shiftSupply(generation,
 					oversupply);
 
+			// Add current day-ahead generation plan
 			json.put("generation", generation);
 			json.put("oversupply", oversupply);
+
+			// Add altered Time-of-Emissions generation plan
 			json.put(GENERATION_SHIFT, supplyShift.get(GENERATION_SHIFT));
 			json.put(OVERSUPPLY_SHIFT, supplyShift.get(OVERSUPPLY_SHIFT));
 
+			// Create a map of fuel colors
 			HashMap<String, String> colors = new HashMap<String, String>();
 			for (CommonFuelType commonFuelType : generation.keySet()) {
 				colors.put(commonFuelType.toString(),
 						commonFuelType.getGraphColor());
 			}
-			colors.put("OVERSUPPLY", "#787878");
+			colors.put("OVERSUPPLY", "#7e7e7e");
+			colors.put(TimeOfUseRate.OFF_PEAK.toString(), "#C2DA8B");
+			colors.put(TimeOfUseRate.MID_PEAK.toString(), "#FCDF6F");
+			colors.put(TimeOfUseRate.ON_PEAK.toString(), "#DF9C7D");
 			json.put("colors", colors);
+
+			// Add Time-of-Use periods
+			TimeOfUseSeason timeOfUseSeason = TimeOfUseSeason
+					.valueOfDateTime(jsonDateTime);
+			HashMap<TimeOfUseRate, Date[][]> rates = new HashMap<TimeOfUseRate, Date[][]>();
+			if (timeOfUseSeason == TimeOfUseSeason.SUMMER) {
+				rates.put(TimeOfUseRate.OFF_PEAK, new Date[][] {
+						{ jsonDateTime.plusHours(0).toDate(),
+								jsonDateTime.plusHours(7).toDate() },
+						{ jsonDateTime.plusHours(19).toDate(),
+								jsonDateTime.plusHours(23).toDate() } }); // TODO Set 23 end time back to 24
+				rates.put(TimeOfUseRate.MID_PEAK, new Date[][] {
+						{ jsonDateTime.plusHours(7).toDate(),
+								jsonDateTime.plusHours(11).toDate() },
+						{ jsonDateTime.plusHours(17).toDate(),
+								jsonDateTime.plusHours(19).toDate() } });
+				rates.put(TimeOfUseRate.ON_PEAK, new Date[][] { {
+						jsonDateTime.plusHours(11).toDate(),
+						jsonDateTime.plusHours(17).toDate() } });
+			}
+			json.put("rates", rates);
 
 			break;
 		default:

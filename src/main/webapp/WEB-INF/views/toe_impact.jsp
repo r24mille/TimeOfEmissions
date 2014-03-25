@@ -7,6 +7,7 @@
 <toe:head pageTitle="Time-of-Emissions Forecast Impact Simulation"
 	description="Simulate the ideal impact of a time-of-emissions signal with automated demand responsef" />
 <body>
+	<h1>Day-Ahead Electricity Generation Forecast in Ontario for June 5, 2013</h1>
 	<script src="<%=request.getContextPath()%>/resources/js/toe_impact.js"></script>
 	<script>
 		chartImpact("${pageContext.request.contextPath}", "IESO", "${date}");

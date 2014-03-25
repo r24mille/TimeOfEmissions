@@ -1,9 +1,9 @@
 // Extra right padding to fit legend
 var _margin = {
 	top : 20,
-	right : 125,
-	bottom : 30,
-	left : 50
+	right : 100,
+	bottom : 70,
+	left : 100
 };
 var _width = 1200 - _margin.left - _margin.right;
 var _height = 600 - _margin.top - _margin.bottom;
@@ -42,178 +42,264 @@ _hatchG.append("path").attr("d", "M0,0 l10,10");
 _hatchG.append("path").attr("d", "M10,0 l-10,10");
 
 function chartImpact(contextPath, iso, date) {
-	d3.json(contextPath + "/toe_impact/iso/" + iso + "/date/" + date + "/json",
-			function(error, data) {
-				var hours = [];
-				for (var i = 0; i <= 23; i++) {
-					hours.push(i);
-				}
+	d3
+			.json(
+					contextPath + "/toe_impact/iso/" + iso + "/date/" + date
+							+ "/json",
+					function(error, data) {
+						var hours = [];
+						for (var i = 0; i <= 23; i++) {
+							hours.push(i);
+						}
 
-				// Use only the names of fuel types with values
-				var usedFuelNames = d3.entries(data.generation).map(
-						function(e) {
-							if (e.value.some(function(v) {
-								return v.scheduledMW;
-							}) > 0) {
-								return e.key;
-							}
-						}).filter(function(d) {
-					return d !== undefined && d !== "DISPATCHABLE_LOAD";
-				}).concat([ "OVERSUPPLY" ]);
+						// Use only the names of fuel types with values
+						var usedFuelNames = d3.entries(data.generation).map(
+								function(e) {
+									if (e.value.some(function(v) {
+										return v.scheduledMW;
+									}) > 0) {
+										return e.key;
+									}
+								}).filter(
+								function(d) {
+									return d !== undefined
+											&& d !== "DISPATCHABLE_LOAD";
+								}).concat([ "OVERSUPPLY" ]);
 
-				var generators = _stack(usedFuelNames.map(function(name) {
-					if (d3.keys(data.generation).indexOf(name) > -1) {
-						return {
-							name : name,
-							values : data.generation[name].map(function(d, i) {
-								return {
-									date : d.date,
-									y : d.scheduledMW
-								};
-							})
-						};
-					} else if (name === "OVERSUPPLY") {
-						return {
-							name : name,
-							values : data.oversupply.map(function(d) {
-								return {
-									date : d.date,
-									y : d.excess
-								};
-							})
-						};
-					}
-				}));
+						// Normalize the domain of the x- and y-axis to time and
+						// demand
+						// data respectively
+						_x.domain(d3.extent(data.oversupply, function(d) {
+							return d.date;
+						}));
 
-				var generators_shift = _stack(usedFuelNames.map(function(name) {
-					if (d3.keys(data.generationShift).indexOf(name) > -1) {
-						return {
-							name : name,
-							values : data.generationShift[name].map(function(d,
-									i) {
-								return {
-									date : d.date,
-									y : d.scheduledMW
-								};
-							})
-						};
-					} else if (name === "OVERSUPPLY") {
-						return {
-							name : name,
-							values : data.oversupplyShift.map(function(d) {
-								return {
-									date : d.date,
-									y : d.excess
-								};
-							})
-						};
-					}
-				}));
+						_y.domain([
+								0,
+								d3.sum(d3.keys(data.generation), function(d) {
+									return d3.max(data.generation[d]
+											.map(function(e) {
+												return e.scheduledMW;
+											}));
+								}) + 3000 ]); // Select max hourly demand +
+						// 3000MW padding
 
-				_x.domain(d3.extent(data.oversupply, function(d) {
-					return d.date;
-				}));
+						// Create Time-of-Use rate colored background
+						d3
+								.entries(data.rates)
+								.map(
+										function(r) {
+											r.value
+													.forEach(function(h) {
+														_svg
+																.append("rect")
+																.attr("height",
+																		_height)
+																.attr(
+																		"width",
+																		(_x(h[1]) - _x(h[0])))
+																.attr(
+																		"transform",
+																		"translate("
+																				+ _x(h[0])
+																				+ ",0)")
+																.attr(
+																		"fill",
+																		data.colors[r.key]);
+														_svg
+																.append("text")
+																.attr(
+																		"x",
+																		(_x(h[0]) + ((_x(h[1]) - _x(h[0])) / 2)))
+																.attr("y", 26)
+																.style(
+																		"text-anchor",
+																		"middle")
+																.style("fill",
+																		"white")
+																.style(
+																		"font-size",
+																		"20px")
+																.text(
+																		capitalize(r.key));
+													});
+										});
 
-				_y.domain([ 0, d3.sum(d3.keys(data.generation), function(d) {
-					return d3.max(data.generation[d].map(function(e) {
-						return e.scheduledMW;
-					}));
-				}) + 3000 ]); // Select max hourly demand + 3000MW padding
+						// Generators' area
+						var generators = _stack(usedFuelNames
+								.map(function(name) {
+									if (d3.keys(data.generation).indexOf(name) > -1) {
+										return {
+											name : name,
+											values : data.generation[name]
+													.map(function(d, i) {
+														return {
+															date : d.date,
+															y : d.scheduledMW
+														};
+													})
+										};
+									} else if (name === "OVERSUPPLY") {
+										return {
+											name : name,
+											values : data.oversupply
+													.map(function(d) {
+														return {
+															date : d.date,
+															y : d.excess
+														};
+													})
+										};
+									}
+								}));
 
-				var generator = _svg.selectAll(".generator").data(generators)
-						.enter().append("g").attr("class", "generator");
+						var generators_shift = _stack(usedFuelNames
+								.map(function(name) {
+									if (d3.keys(data.generationShift).indexOf(
+											name) > -1) {
+										return {
+											name : name,
+											values : data.generationShift[name]
+													.map(function(d, i) {
+														return {
+															date : d.date,
+															y : d.scheduledMW
+														};
+													})
+										};
+									} else if (name === "OVERSUPPLY") {
+										return {
+											name : name,
+											values : data.oversupplyShift
+													.map(function(d) {
+														return {
+															date : d.date,
+															y : d.excess
+														};
+													})
+										};
+									}
+								}));
 
-				generator.append("path").attr("class", "area").attr("d",
-						function(d) {
-							return _stackArea(d.values);
-						}).attr("id", function(d, i) {
-					return d.name + "-path";
-				}).style("fill", function(d) {
-					if (d.name === "OVERSUPPLY") {
-						return "url(#diagonalHatch)";
-					} else {
-						return data.colors[d.name];
-					}
-				});
+						var generator = _svg.selectAll(".generator").data(
+								generators).enter().append("g").attr("class",
+								"generator");
 
-				// Update legend
-				var legend = _svg.selectAll(".legend").data(
-						usedFuelNames.reverse());
-
-				legend.enter().append("g").attr("class", "legend").attr(
-						"transform", function(d, i) {
-							return "translate(0," + i * 20 + ")";
-						});
-
-				legend.append("rect").attr("x", (_width + _margin.right - 18))
-						.attr("width", 18).attr("height", 18).attr("id",
-								function(a, i) {
-									return a + "-legend";
-								}).style("fill", function(d) {
-							if (d === "OVERSUPPLY") {
+						generator.append("path").attr("class", "area").attr(
+								"d", function(d) {
+									return _stackArea(d.values);
+								}).attr("id", function(d, i) {
+							return d.name + "-path";
+						}).style("fill", function(d) {
+							if (d.name === "OVERSUPPLY") {
 								return "url(#diagonalHatch)";
 							} else {
-								return data.colors[d];
+								return data.colors[d.name];
 							}
 						});
 
-				legend.append("text").attr("x", (_width + _margin.right - 24))
-						.attr("y", 9).attr("dy", ".35em").style("text-anchor",
-								"end").text(function(d) {
-							return d;
-						});
+						// Create legend
+						var legend = _svg.selectAll(".legend").data(
+								usedFuelNames.reverse());
 
-				// generator.append("text").datum(function(d) {
-				// return {
-				// name : d.name,
-				// value : d.values[d.values.length - 1]
-				// };
-				// }).attr(
-				// "transform",
-				// function(d) {
-				// return "translate(" + _x(d.value.date) + ","
-				// + _y(d.value.y0 + d.value.y / 2) + ")";
-				// }).attr("x", 0).attr("dy", ".35em").text(function(d) {
-				// return d.name;
-				// }).attr("id", function(d, i) {
-				// return d.name + "-text";
-				// });
+						legend.enter().append("g").attr("class", "legend")
+								.attr("transform", function(d, i) {
+									return "translate(0," + i * 20 + ")";
+								});
 
-				// Generators' area
-				_svg.append("g").attr("class", "x axis").attr("transform",
-						"translate(0," + _height + ")").call(_xAxis);
-
-				_svg.append("g").attr("class", "y axis").call(_yAxis).append(
-						"text").attr("transform", "rotate(-90)").attr("y", 6)
-						.attr("dy", ".71em").style("text-anchor", "end").text(
-								"Demand (MW)");
-
-				// Transition on-click callback
-				d3.select("body").on(
-						"click",
-						function(d) {
-							// Update the day-ahead forecast with the shifted
-							// plan
-							_svg.selectAll(".generator").select("path").data(
-									generators_shift).transition().duration(
-									_transitionDuration).attr("d", function(d) {
-								return _stackArea(d.values);
-							});
-
-							// Remove OVERSUPPLY label if all oversupply has
-							// been shifted
-							generators_shift.map(function(d) {
-								if (d.name === "OVERSUPPLY") {
-									if (d3.sum(d.values.map(function(v) {
-										return v.y;
-									})) === 0) {
-										d3.select("#OVERSUPPLY-text")
-												.transition().duration(
-														_transitionDuration)
-												.style("opacity", 0);
+						legend.append("rect").attr("x",
+								(_width + _margin.right - 18))
+								.attr("width", 18).attr("height", 18).attr(
+										"id", function(a, i) {
+											return a + "-legend";
+										}).style("fill", function(d) {
+									if (d === "OVERSUPPLY") {
+										return "url(#diagonalHatch)";
+									} else {
+										return data.colors[d];
 									}
-								}
-							})
-						});
-			});
+								});
+
+						legend.append("text").attr("x",
+								(_width + _margin.right - 24)).attr("y", 9)
+								.attr("dy", ".35em")
+								.style("text-anchor", "end").text(function(d) {
+									return capitalize(d);
+								});
+
+						// Ticks on x- and y-axis
+						_svg.append("g").attr("class", "x axis").attr(
+								"transform", "translate(0," + _height + ")")
+								.call(_xAxis).append("text").attr("x",
+										(_width / 2)).attr("y",
+										((_margin.bottom / 1.75))).style(
+										"text-anchor", "middle").style(
+										"font-size", "16px")
+								.text("Time of Day");
+
+						_svg.append("g").attr("class", "y axis").call(_yAxis)
+								.append("text")
+								.attr("transform", "rotate(-90)").attr("y",
+										(0 - (_margin.left / 1.75))).attr("x",
+										(0 - (_height / 2))).style(
+										"text-anchor", "middle").style(
+										"font-size", "16px").text(
+										"Electricity Demand (MW)");
+
+						// Transition on-click callback
+						d3
+								.select("body")
+								.on(
+										"click",
+										function(d) {
+											// Update the day-ahead forecast
+											// with the shifted plan
+											_svg
+													.selectAll(".generator")
+													.select("path")
+													.data(generators_shift)
+													.transition()
+													.duration(
+															_transitionDuration)
+													.attr(
+															"d",
+															function(d) {
+																return _stackArea(d.values);
+															});
+
+											// Remove OVERSUPPLY label if all
+											// oversupply has
+											// been shifted
+											generators_shift
+													.map(function(d) {
+														if (d.name === "OVERSUPPLY") {
+															if (d3
+																	.sum(d.values
+																			.map(function(
+																					v) {
+																				return v.y;
+																			})) === 0) {
+																d3
+																		.select(
+																				"#OVERSUPPLY-text")
+																		.transition()
+																		.duration(
+																				_transitionDuration)
+																		.style(
+																				"opacity",
+																				0);
+															}
+														}
+													})
+										});
+					});
+}
+
+function capitalize(text) {
+	if (text.contains("PEAK")) {
+		return (text.charAt(0).toUpperCase() + text.slice(1).toLowerCase())
+				.replace("_", "-");
+	} else {
+		return (text.charAt(0).toUpperCase() + text.slice(1).toLowerCase())
+				.replace("_", " ");
+	}
 }
