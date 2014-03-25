@@ -1,16 +1,16 @@
 // Extra right padding to fit legend
 var _margin = {
 	top : 0,
-	right : 100,
-	bottom : 70,
-	left : 100
+	right : 115,
+	bottom : 75,
+	left : 115
 };
 var _width = 1200 - _margin.left - _margin.right;
 var _height = 600 - _margin.top - _margin.bottom;
 
 var _x = d3.time.scale().range([ 0, _width ]);
 var _y = d3.scale.linear().range([ _height, 0 ]);
-var _xAxis = d3.svg.axis().scale(_x).orient("bottom");
+var _xAxis = d3.svg.axis().scale(_x).orient("bottom").ticks(d3.time.hour, 2);
 var _yAxis = d3.svg.axis().scale(_y).orient("left");
 
 var _transitionDuration = 3000;
@@ -47,10 +47,7 @@ function chartImpact(contextPath, iso, date) {
 					contextPath + "/toe_impact/iso/" + iso + "/date/" + date
 							+ "/json",
 					function(error, data) {
-						var hours = [];
-						for (var i = 0; i <= 23; i++) {
-							hours.push(i);
-						}
+
 
 						// Use only the names of fuel types with values
 						var usedFuelNames = d3.entries(data.generation).map(
@@ -67,8 +64,7 @@ function chartImpact(contextPath, iso, date) {
 								}).concat([ "OVERSUPPLY" ]);
 
 						// Normalize the domain of the x- and y-axis to time and
-						// demand
-						// data respectively
+						// demand data respectively
 						_x.domain(d3.extent(data.oversupply, function(d) {
 							return d.date;
 						}));
@@ -81,7 +77,7 @@ function chartImpact(contextPath, iso, date) {
 												return e.scheduledMW;
 											}));
 								}) + 3000 ]); // Select max hourly demand +
-						// 3000MW padding
+												// 3000MW padding
 
 						// Create Time-of-Use rate colored background
 						d3
@@ -220,11 +216,11 @@ function chartImpact(contextPath, iso, date) {
 								});
 
 						legend.append("text").attr("x",
-								(_width + _margin.right - 24)).attr("y", 9)
+								(_width + _margin.right - 24)).attr("y", 8)
 								.attr("dy", ".35em")
 								.style("text-anchor", "end").text(function(d) {
 									return capitalize(d);
-								});
+								}).style("font-size", "13px");
 
 						// Ticks on x- and y-axis
 						_svg.append("g").attr("class", "x axis").attr(
@@ -246,54 +242,29 @@ function chartImpact(contextPath, iso, date) {
 										"Electricity Demand (MW)");
 
 						// Transition on-click callback
-						d3
-								.select("body")
-								.on(
-										"click",
-										function(d) {
-											// Update the day-ahead forecast
-											// with the shifted plan
-											_svg
-													.selectAll(".generator")
-													.select("path")
-													.data(generators_shift)
-													.transition()
-													.duration(
-															_transitionDuration)
-													.attr(
-															"d",
-															function(d) {
-																return _stackArea(d.values);
-															});
+						d3.select("body").on(
+								"click",
+								function(d) {
+									// Update the day-ahead forecast
+									// with the shifted plan
+									_svg.selectAll(".generator").select("path")
+											.data(generators_shift)
+											.transition().duration(
+													_transitionDuration)
+											.attr("d", function(d) {
+												return _stackArea(d.values);
+											});
 
-											// Remove OVERSUPPLY label if all
-											// oversupply has
-											// been shifted
-											generators_shift
-													.map(function(d) {
-														if (d.name === "OVERSUPPLY") {
-															if (d3
-																	.sum(d.values
-																			.map(function(
-																					v) {
-																				return v.y;
-																			})) === 0) {
-																d3
-																		.select(
-																				"#OVERSUPPLY-text")
-																		.transition()
-																		.duration(
-																				_transitionDuration)
-																		.style(
-																				"opacity",
-																				0);
-															}
-														}
-													})
-										});
+								});
 					});
 }
 
+/**
+ * Convert enum strings to human-friendly text.
+ * 
+ * @param text
+ * @returns transformed text
+ */
 function capitalize(text) {
 	if (text.contains("PEAK")) {
 		return (text.charAt(0).toUpperCase() + text.slice(1).toLowerCase())

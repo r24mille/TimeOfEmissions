@@ -314,6 +314,10 @@ body#toe-impact h1 {
 	text-align: center;
 }
 
+body#toe-impact .tick {
+	font-size: 13px;
+}
+
 
 /* ==========================================================================
    Media Queries
