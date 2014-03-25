@@ -53,6 +53,7 @@ public class SbgImpactController {
 
 	@RequestMapping(value = "/toe_impact/date/{datePart}/html", method = RequestMethod.GET)
 	public String generatorOutput(@PathVariable String datePart, Model model) {
+		model.addAttribute("midnight", sbgTimestampFormatter.parseDateTime(datePart + " 0:00:00").toDate());
 		model.addAttribute("date", datePart);
 		return "toe_impact";
 	}

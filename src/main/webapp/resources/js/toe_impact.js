@@ -1,6 +1,6 @@
 // Extra right padding to fit legend
 var _margin = {
-	top : 20,
+	top : 0,
 	right : 100,
 	bottom : 70,
 	left : 100

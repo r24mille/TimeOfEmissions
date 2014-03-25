@@ -310,6 +310,10 @@ path#OVERSUPPLY-path, rect#OVERSUPPLY-legend {
 	stroke-width: 1;
 }
 
+body#toe-impact h1 {
+	text-align: center;
+}
+
 
 /* ==========================================================================
    Media Queries
