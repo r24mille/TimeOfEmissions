@@ -305,6 +305,10 @@ li.wind_sq {
 #ui-datepicker-div {
 	z-index: 11 !important;
 }
+path#OVERSUPPLY-path, rect#OVERSUPPLY-legend {
+	stroke: #7e7e7e;
+	stroke-width: 1;
+}
 
 
 /* ==========================================================================

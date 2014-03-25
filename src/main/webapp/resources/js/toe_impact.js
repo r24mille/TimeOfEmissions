@@ -28,10 +28,18 @@ var _stack = d3.layout.stack().values(function(d) {
 	return d.values;
 });
 
-var _svg = d3.select("body").append("svg").attr("width",
+var _svg = d3.select("body").append("svg").attr("id", "toe_svg").attr("width",
 		_width + _margin.left + _margin.right).attr("height",
 		_height + _margin.top + _margin.bottom).append("g").attr("transform",
 		"translate(" + _margin.left + "," + _margin.top + ")");
+
+// Build diagonal hatch from http://www.carto.net/svg/samples/pattern1.svg
+_hatchG = d3.select("#toe_svg").insert("defs", "g").append("pattern").attr(
+		"id", "diagonalHatch").attr("patternUnits", "userSpaceOnUse").attr("x",
+		0).attr("y", 0).attr("width", 10).attr("height", 10).append("g").attr(
+		"style", "fill:none; stroke:#7e7e7e; stroke-width: 2.5;");
+_hatchG.append("path").attr("d", "M0,0 l10,10");
+_hatchG.append("path").attr("d", "M10,0 l-10,10");
 
 function chartImpact(contextPath, iso, date) {
 	d3.json(contextPath + "/toe_impact/iso/" + iso + "/date/" + date + "/json",
@@ -121,7 +129,11 @@ function chartImpact(contextPath, iso, date) {
 						}).attr("id", function(d, i) {
 					return d.name + "-path";
 				}).style("fill", function(d) {
-					return data.colors[d.name];
+					if (d.name === "OVERSUPPLY") {
+						return "url(#diagonalHatch)";
+					} else {
+						return data.colors[d.name];
+					}
 				});
 
 				// Update legend
@@ -134,10 +146,16 @@ function chartImpact(contextPath, iso, date) {
 						});
 
 				legend.append("rect").attr("x", (_width + _margin.right - 18))
-						.attr("width", 18).attr("height", 18).style("fill",
-								function(d) {
-									return data.colors[d];
-								});
+						.attr("width", 18).attr("height", 18).attr("id",
+								function(a, i) {
+									return a + "-legend";
+								}).style("fill", function(d) {
+							if (d === "OVERSUPPLY") {
+								return "url(#diagonalHatch)";
+							} else {
+								return data.colors[d];
+							}
+						});
 
 				legend.append("text").attr("x", (_width + _margin.right - 24))
 						.attr("y", 9).attr("dy", ".35em").style("text-anchor",
