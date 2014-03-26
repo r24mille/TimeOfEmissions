@@ -114,7 +114,7 @@ function chartImpact(contextPath, iso, date) {
 																		"white")
 																.style(
 																		"font-size",
-																		"20px")
+																		"17px")
 																.text(
 																		capitalize(r.key));
 													});

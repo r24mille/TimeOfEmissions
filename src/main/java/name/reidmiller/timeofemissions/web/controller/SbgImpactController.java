@@ -46,8 +46,8 @@ import ca.ieso.reports.schema.sbg.Document.DocBody.DailyForecast.HourlyForecast;
 public class SbgImpactController {
 	private Logger logger = LogManager.getLogger(this.getClass());
 	private static final int MAX_HOUR_SHIFT = 4;
-	private static final String GENERATION_SHIFT = "generationShift";
-	private static final String OVERSUPPLY_SHIFT = "oversupplyShift";
+	public static final String GENERATION_SHIFT = "generationShift";
+	public static final String OVERSUPPLY_SHIFT = "oversupplyShift";
 	DateTimeFormatter sbgTimestampFormatter = DateTimeFormat
 			.forPattern("yyyy-MM-dd H:mm:ss");
 
@@ -126,7 +126,7 @@ public class SbgImpactController {
 		return json;
 	}
 
-	private List<CommonOversupply> getIesoSbgForecast(
+	public List<CommonOversupply> getIesoSbgForecast(
 			DateTime forecastedDateTime) {
 		List<CommonOversupply> commonOversupplyForecast = new ArrayList<CommonOversupply>();
 		SurplusBaseloadGenerationClient sbgClient = IesoPublicReportBindingsConfig
@@ -325,7 +325,7 @@ public class SbgImpactController {
 		return commonAggregateGenerationForecast;
 	}
 
-	private HashMap<String, Object> shiftSupply(
+	public HashMap<String, Object> shiftSupply(
 			TreeMap<CommonFuelType, List<CommonAggregateGeneration>> generation,
 			List<CommonOversupply> oversupply) {
 		// Deep clone both generation and oversupply
